@@ -1,5 +1,8 @@
 from unittest.mock import patch
 
+import pytest
+
+from tkseal.exceptions import TKSealError
 from tkseal.kubectl import KubeCtl
 
 
@@ -16,3 +19,38 @@ class TestKubectl:
     def test_kubectl_exists_false_when_not_installed(self, _):
         """Return False when kubectl is not on PATH."""
         assert KubeCtl.exists() is False
+
+    def test_get_secrets_success(self, load_secret_file):
+        test_secrets_yaml, test_secrets_dict = load_secret_file
+        with patch('tkseal.kubectl.KubeCtl._run_command') as mock_run:
+            mock_run.return_value = test_secrets_yaml
+            result = KubeCtl.get_secrets("test-context", "test-namespace")
+
+            mock_run.assert_called_once_with(
+                ["kubectl", "--context=test-context",
+                    "--namespace=test-namespace", "get", "secrets", "-o", "yaml"]
+            )
+            assert result == test_secrets_dict
+            # Verify structure of returned data
+            assert result['apiVersion'] == 'v1'
+            assert result['kind'] == 'List'
+            assert 'items' in result
+            assert len(result['items']) == 2
+
+    def test_get_secrets_kubectl_error(self):
+        with patch('tkseal.kubectl.KubeCtl._run_command') as mock_run:
+            mock_run.side_effect = Exception("kubectl error")
+
+            with pytest.raises(TKSealError) as exc_info:
+                KubeCtl.get_secrets("test-context", "test-namespace")
+
+            assert "Failed to get secrets" in str(exc_info.value)
+
+    def test_get_secrets_invalid_yaml(self):
+        with patch('tkseal.kubectl.KubeCtl._run_command') as mock_run:
+            mock_run.return_value = "invalid: yaml: :"
+
+            with pytest.raises(TKSealError) as exc_info:
+                KubeCtl.get_secrets("test-context", "test-namespace")
+
+            assert "Failed to parse secrets YAML" in str(exc_info.value)
