@@ -7,11 +7,13 @@ from tkseal.kubectl import KubeCtl
 
 
 class TestKubectl:
-    @patch("tkseal.kubectl.shutil.which", return_value="/usr/local/bin/kubectl")
-    def test_kubectl_exists_returns_true_when_installed(self, mock_which):
+    #@patch("tkseal.kubectl.shutil.which", return_value="/usr/local/bin/kubectl")
+
+    def test_kubectl_exists_returns_true_when_installed(self, mocker):
         """Return True when kubectl is on PATH.
         This test mocks shutil.which to simulate kubectl being installed.
         """
+        mock_which = mocker.patch("tkseal.kubectl.shutil.which", return_value="/usr/local/bin/kubectl")
         assert KubeCtl.exists() is True
         mock_which.assert_called_once_with("kubectl")
 
