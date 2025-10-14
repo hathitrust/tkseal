@@ -57,16 +57,28 @@ class KubeCtl:
             TKSealError: If there's an error running kubectl or parsing the output
         """
         try:
-            cmd = ["kubectl", f"--context={context}",
-                   f"--namespace={namespace}", "get", "secrets", "-o", "yaml"]
+            # Construct kubectl command with proper context and namespace
+            cmd = [
+                "kubectl",
+                f"--context={context}",
+                f"--namespace={namespace}",
+                "get",
+                "secrets",
+                "-o",
+                "yaml"
+            ]
+            
+            # Execute kubectl command and get output
             output = KubeCtl._run_command(cmd)
 
+            # Parse YAML output into Python dictionary
             try:
                 return yaml.safe_load(output)
             except yaml.YAMLError as e:
                 raise TKSealError(f"Failed to parse secrets YAML: {str(e)}")
 
-        except Exception as e:
-            raise TKSealError(f"Failed to get secrets: {str(e)}")
+        except TKSealError:
+            # Re-raise TKSealError without wrapping
+            raise
         except Exception as e:
             raise TKSealError(f"Failed to get secrets: {str(e)}")
