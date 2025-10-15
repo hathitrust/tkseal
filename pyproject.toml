@@ -28,7 +28,7 @@ classifiers = [
 dependencies = [
     "click>=8.1.0",
     "pyyaml>=6.0",
-
+    "pytest-mock (>=3.15.1,<4.0.0)"
 ]
 
 [project.optional-dependencies]
@@ -39,7 +39,6 @@ dev = [
     "mypy>=1.6.0",
     "black>=23.9.0",
     "types-pyyaml>=6.0.0",
-    "pytest-mock (>=3.15.1,<4.0.0)",
 ]
 
 [project.scripts]
