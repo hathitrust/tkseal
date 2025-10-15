@@ -68,3 +68,26 @@ def test_secrets_collection():
     assert len(secrets.items) == 2
     assert all(isinstance(s, Secret) for s in secrets.items)
     assert [s.name for s in secrets.items] == ["secret1", "secret2"]
+
+def test_secrets_data_collection():
+    raw = {
+        "metadata": {"name": "test-secret"},
+        "data": {
+            "user1": "dXNlcjE=",  # base64 encoded "user1"
+            "user2": "dXNlcjI=",  # base64 encoded "user2"
+            "user3": "dXNlcjM=",  # base64 encoded "user3"
+            "user4": "dXNlcjQ=",  # base64 encoded "user4"
+        },
+    }
+    secret = Secret(raw)
+    data = secret.data
+
+    assert len(data) == 4
+    assert isinstance(data[0], SecretDataPair)
+    assert data[0].key == "user1"
+    assert data[0].plain_value == "user1"
+    assert data[0].encoded_value == "dXNlcjE="
+
+    assert data[1].key == "user2"
+    assert data[1].plain_value == "user2"
+    assert data[1].encoded_value == "dXNlcjI="

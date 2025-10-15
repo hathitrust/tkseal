@@ -8,6 +8,12 @@ A Python 3.12 port of the Ruby [tkseal](https://github.com/mlibrary/tkseal) CLI 
 - Python 3.12+
 - Poetry (for dependency management)
 
+### Use poetry to install dev dependencies
+
+```bash
+poetry install --with dev
+```
+
 ### Setup Commands
 
 ```bash
