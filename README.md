@@ -57,8 +57,8 @@ poetry run mypy src/
 ## Available Commands
 
 - ✅ `tkseal version` - Show current version
-- 👩‍💻 `tkseal ready` - Check dependencies (WIP)
-- 🚧 `tkseal diff PATH` - Show differences between plain_secrets.json and cluster
+- ✅ `tkseal ready` - Check dependencies (WIP)
+- ‍💻 `tkseal diff PATH` - Show differences between plain_secrets.json and cluster
 - 🚧 `tkseal pull PATH` - Extract secrets from cluster to plain_secrets.json
 - 🚧 `tkseal seal PATH` - Convert plain_secrets.json to sealed_secrets.json
 - 
@@ -110,7 +110,20 @@ poetry run mypy src/
   - Used for: Converting plain text secrets to sealed secrets
   - Example usage: `printf "secret" | kubeseal --raw --namespace ns --name secret-name --context ctx`
 
+### diff command
 
+### pull command
+
+** Core Functionality**
+The pull command extracts existing Kubernetes secrets from the cluster and writes them to a local plain_secrets.json 
+file in the specified Tanka environment directory. This allows users to synchronize their local secret 
+definitions with what is currently deployed in the cluster.
+
+The flow is:
+    1. Create a SecretState object with the Tanka environment path
+    2. Show a diff of changes (what would change in plain_secrets.json)
+    3. Prompt user for confirmation
+    4. Write kube secrets to plain_secrets.json  
 
 
 

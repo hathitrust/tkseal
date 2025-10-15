@@ -1,7 +1,4 @@
 import base64
-from dataclasses import dataclass
-
-import pytest
 
 from tkseal.secret import Secret, SecretDataPair, Secrets
 
@@ -10,7 +7,7 @@ def test_secret_data_pair():
     pair = SecretDataPair(
         key="username",
         plain_value="admin",
-        encoded_value=base64.b64encode("admin".encode()).decode()
+        encoded_value=base64.b64encode(b"admin").decode()
     )
     assert pair.key == "username"
     assert pair.plain_value == "admin"
@@ -52,7 +49,16 @@ def test_secret_data():
     assert data[1].encoded_value == "c2VjcmV0"
 
 
+def test_secret_empty_data():
+    """Test that Secret handles missing data field gracefully."""
+    raw = {"metadata": {"name": "empty-secret"}}  # No "data" key
+    secret = Secret(raw)
+    assert secret.name == "empty-secret"
+    assert secret.data == []
+
+
 def test_secrets_collection():
+    """Test that Secrets correctly initializes a collection of Secret objects when given a list."""
     raw_secrets = [
         {
             "metadata": {"name": "secret1"},
@@ -70,6 +76,7 @@ def test_secrets_collection():
     assert [s.name for s in secrets.items] == ["secret1", "secret2"]
 
 def test_secrets_data_collection():
+    """Test that Secret.data returns a list of SecretDataPair objects."""
     raw = {
         "metadata": {"name": "test-secret"},
         "data": {
@@ -91,3 +98,102 @@ def test_secrets_data_collection():
     assert data[1].key == "user2"
     assert data[1].plain_value == "user2"
     assert data[1].encoded_value == "dXNlcjI="
+
+
+def test_secrets_with_kubectl_format():
+    """Test that Secrets accepts kubectl output format with 'items' key."""
+    kubectl_output = {
+        "apiVersion": "v1",
+        "kind": "List",
+        "items": [
+            {
+                "metadata": {"name": "secret1"},
+                "data": {"key1": "dmFsdWUx"}  # base64 encoded "value1"
+            },
+            {
+                "metadata": {"name": "secret2"},
+                "data": {"key2": "dmFsdWUy"}  # base64 encoded "value2"
+            }
+        ]
+    }
+    secrets = Secrets(kubectl_output)
+    assert len(secrets.items) == 2
+    assert secrets.items[0].name == "secret1"
+    assert secrets.items[1].name == "secret2"
+
+
+def test_secrets_with_list_format():
+    """Test that Secrets still works with direct list format (backward compatibility)."""
+    secret_list = [
+        {
+            "metadata": {"name": "secret1"},
+            "data": {"key1": "dmFsdWUx"}
+        },
+        {
+            "metadata": {"name": "secret2"},
+            "data": {"key2": "dmFsdWUy"}
+        }
+    ]
+    secrets = Secrets(secret_list)
+    assert len(secrets.items) == 2
+    assert secrets.items[0].name == "secret1"
+    assert secrets.items[1].name == "secret2"
+
+
+def test_secrets_to_json():
+    """Test that Secrets.to_json() returns properly formatted JSON with decoded values."""
+    import json
+
+    secret_list = [
+        {
+            "metadata": {"name": "example"},
+            "data": {
+                "EXAMPLE_SECRET": "ZXhhbXBsZV9zZWNyZXQ=",  # "example_secret"
+                "ANOTHER_KEY": "YW5vdGhlcl92YWx1ZQ=="  # "another_value"
+            }
+        }
+    ]
+    secrets = Secrets(secret_list)
+    json_output = secrets.to_json()
+
+    # Verify it's valid JSON
+    parsed = json.loads(json_output)
+
+    # Verify structure
+    assert len(parsed) == 1
+    assert parsed[0]["name"] == "example"
+    assert parsed[0]["data"]["EXAMPLE_SECRET"] == "example_secret"
+    assert parsed[0]["data"]["ANOTHER_KEY"] == "another_value"
+
+
+def test_secrets_for_tk_env(mocker):
+    """Test that Secrets.for_tk_env() integrates TKEnvironment and KubeCtl correctly."""
+    # Mock TKEnvironment
+    mock_env = mocker.Mock()
+    mock_env.context = "test-context"
+    mock_env.namespace = "test-namespace"
+    mock_tk_class = mocker.patch('tkseal.secret.TKEnvironment', return_value=mock_env)
+
+    # Mock KubeCtl.get_secrets to return a kubectl format
+    mock_kubectl_response = {
+        "items": [
+            {
+                "metadata": {"name": "secret1"},
+                "data": {"key1": "dmFsdWUx"}
+            }
+        ]
+    }
+    mock_kubectl = mocker.patch('tkseal.secret.KubeCtl.get_secrets', return_value=mock_kubectl_response)
+
+    # Call for_tk_env
+    secrets = Secrets.for_tk_env("some/path")
+
+    # Verify TKEnvironment was created with correct path
+    mock_tk_class.assert_called_once_with("some/path")
+
+    # Verify KubeCtl.get_secrets was called with correct context and namespace
+    mock_kubectl.assert_called_once_with(context="test-context", namespace="test-namespace")
+
+    # Verify Secrets object was created correctly
+    assert len(secrets.items) == 1
+    assert secrets.items[0].name == "secret1"
