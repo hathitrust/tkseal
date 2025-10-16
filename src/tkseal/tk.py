@@ -31,10 +31,11 @@ class TKEnvironment:
         """
         # Normalize path by removing trailing slash and .jsonnet extension
         self._path = re.sub(r'(\.jsonnet)?/?$', '', path)
-
+        print(f"Self Path value: {self._path}")
         try:
             # Get and parse status output
             self._status_lines = self.status(self._path).splitlines()
+            print(f"Self status: {self._status_lines}")
             if not self._status_lines:
                 raise TKSealError(
                     f"No status information found for path: {path}")
