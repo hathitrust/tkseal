@@ -38,7 +38,7 @@ poetry run pytest tests/test_cli.py
 poetry run pytest tests/test_cli.py::TestVersionCommand::test_version_command_returns_version -v
 
 # Run tests with coverage
-poetry run pytest --cov=tkseal --cov-report=term-missing
+poetry run pytest --cov=src/tkseal --cov-report=term-missing
 ```
 
 ## Code Quality

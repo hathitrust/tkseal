@@ -83,6 +83,14 @@ The original tkseal provides these core commands:
 - Use `pathlib.Path` instead of string manipulation for file paths
 - Implement proper error handling with custom exception classes
 
+### Poetry configuration
+- Use `pyproject.toml` to manage dependencies and scripts.
+- Define dev dependencies under `[tool.poetry.dev-dependencies]` for testing and linting
+- Use poetry main page to find best practices: https://python-poetry.org/docs/
+- Use `poetry-core` to build the backend
+- Set up `Ruff` to check on the code style and linting issues
+- Set up `mypy` to check the type hints and static typing issues
+
 ### Testing Strategy
 - Port existing RSpec tests to pytest
 - Use pytest parameterization for test variations

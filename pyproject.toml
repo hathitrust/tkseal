@@ -1,17 +1,14 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "tkseal"
 version = "1.0.0"
+requires-python = ">=3.12"
+
+[tool.poetry]
+version = "1.0.0"
 description = "A command-line utility for managing sealed secrets in Kubernetes environments using Grafana Tanka configuration repositories"
 readme = "README.md"
-license = {text = "MIT"}
-requires-python = ">=3.12"
-authors = [
-    {name = "TKSeal Contributors"}
-]
+authors = ["K'Ron Spar <kspar@umich.edu>", "Lianet Sepulveda Torres <lisepul@umich.edu>"]
+packages = [{include = "tkseal", from = "src"}]
 keywords = ["kubernetes", "secrets", "sealed-secrets", "tanka", "k8s"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -19,45 +16,40 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Topic :: System :: Systems Administration",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-dependencies = [
-    "click>=8.1.0",
-    "pyyaml>=6.0",
-    "pytest-mock (>=3.15.1,<4.0.0)"
-]
+# Runtime dependencies
+[tool.poetry.dependencies]
+python = ">=3.12"
+click = ">=8.1.0"
+pyyaml = ">=6.0"
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
-    "ruff>=0.1.0",
-    "mypy>=1.6.0",
-    "black>=23.9.0",
-    "types-pyyaml>=6.0.0",
-]
+# Development dependencies
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.15.1"
+ruff = "^0.8.0"
+mypy = "^1.13.0"
+types-pyyaml = "^6.0.0"
 
-[project.scripts]
-tkseal = "tkseal.cli:main"
+[tool.poetry.scripts]
+  tkseal = "tkseal.cli:main"
 
-[project.urls]
-Homepage = "https://github.com/mlibrary/tkseal"
-Repository = "https://github.com/mlibrary/tkseal"
-Issues = "https://github.com/mlibrary/tkseal/issues"
-
-[tool.hatch.version]
-path = "src/tkseal/__init__.py"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/tkseal"]
+[build-system]
+requires = ["poetry-core>=2.1.1"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 target-version = "py312"
 line-length = 88
+src = ["src", "tests"]
+
+# New in Ruff 0.0.241 and later
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -74,9 +66,11 @@ ignore = [
 [tool.ruff.per-file-ignores]
 "tests/*" = ["S101"]  # Allow assert in tests
 
-[tool.black]
-target-version = ["py312"]
-line-length = 88
+# Ruff can format now, so we don't need to run black separately
+[tool.ruff.format]
+  quote-style = "double"
+  indent-style = "space"
+  line-ending = "auto"
 
 [tool.mypy]
 python_version = "3.12"
@@ -105,21 +99,24 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=tkseal",
+    "--cov=src/tkseal",
     "--cov-report=term-missing",
     "--cov-report=html",
+    "--cov-report=xml", # Added for CI/CD coverage reporting
 ]
 
 [tool.coverage.run]
-source = ["src"]
-omit = [
-    "tests/*",
-]
+  source = ["src"]
+  omit = [
+      "tests/*",
+  ]
 
 [tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-]
+  exclude_lines = [
+      "pragma: no cover",
+      "def __repr__",
+      "raise AssertionError",
+      "raise NotImplementedError",
+      "if __name__ == .__main__.:",
+      "if TYPE_CHECKING:",
+  ]

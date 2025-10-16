@@ -2,7 +2,6 @@
 
 import pytest
 from click.testing import CliRunner # is Click's built-in test utility that simulates running CLI commands in isolation
-from unittest.mock import patch # Mock is a fake object that simulates the behavior of real code during testingPath
 from tkseal.cli import cli
 
 
@@ -21,13 +20,14 @@ class TestVersionCommand:
 class TestReadyCommand:
     """Test cases for the ready command."""
 
-    #  When using multiple @patch decorators, the parameters are passed in reverse order of the decorators.
-    @patch('tkseal.kubectl.KubeCtl.exists')
-    @patch('tkseal.tk.TK.exists')
-    @patch('tkseal.kubeseal.KubeSeal.exists')
-    def test_ready_command_all_dependencies_installed(self, mock_kubeseal, mock_tk, mock_kubectl):
+    def test_ready_command_all_dependencies_installed(self, mocker):
         """Test that all dependencies are installed."""
         # Use the mock to replace Kubectl.exists()
+
+        mock_kubeseal = mocker.patch('tkseal.kubeseal.KubeSeal.exists')
+        mock_tk = mocker.patch('tkseal.tk.TK.exists')
+        mock_kubectl = mocker.patch('tkseal.kubectl.KubeCtl.exists')
+
         mock_kubectl.return_value = True
         mock_tk.return_value = True
         mock_kubeseal.return_value = True
@@ -39,11 +39,13 @@ class TestReadyCommand:
         assert "✅ tk is installed" in result.output
         assert "✅ Kubeseal is installed" in result.output
 
-    @patch('tkseal.kubectl.KubeCtl.exists')
-    @patch('tkseal.tk.TK.exists')
-    @patch('tkseal.kubeseal.KubeSeal.exists')
-    def test_ready_command_missing_dependencies_installed(self,mock_kubeseal, mock_tk, mock_kubectl):
+    def test_ready_command_missing_dependencies_installed(self,mocker):
         """Test that missing dependencies are installed."""
+
+        mock_kubeseal = mocker.patch("tkseal.kubeseal.KubeSeal.exists")
+        mock_tk = mocker.patch("tkseal.tk.TK.exists")
+        mock_kubectl = mocker.patch("tkseal.kubectl.KubeCtl.exists")
+
         mock_kubectl.return_value = True
         mock_tk.return_value = True
         mock_kubeseal.return_value = False
