@@ -1,6 +1,4 @@
 import subprocess
-from unittest.mock import Mock, patch
-
 import pytest
 
 from tkseal.exceptions import TKSealError
@@ -8,22 +6,28 @@ from tkseal.tk import TK, TKEnvironment
 
 
 class TestTK:
-    @patch("tkseal.tk.shutil.which", return_value="/usr/local/bin/tk")
-    def test_tk_exists_returns_true_when_installed(self, mock_which):
+    def test_tk_exists_returns_true_when_installed(self, mocker):
         """Return True when tk is on PATH."""
+
+        mock_which = mocker.patch("tkseal.tk.shutil.which", return_value="/usr/local/bin/tk")
+
         assert TK.exists() is True
         mock_which.assert_called_once_with("tk")
 
-    @patch("tkseal.tk.shutil.which", return_value=None)
-    def test_tk_exists_false_when_not_installed(self, _):
+    def test_tk_exists_false_when_not_installed(self, mocker):
         """Return False when tk is not on PATH."""
+        mocker_which = mocker.patch("tkseal.tk.shutil.which")
+        mocker_which.return_value = None
+
         assert TK.exists() is False
 
 
 class TestTKEnvironment:
-    @patch.object(TKEnvironment, 'status')
-    def test_tk_environment_initialization(self, mock_status):
+
+    def test_tk_environment_initialization(self, mocker):
         """Test TKEnvironment initialization with various path formats"""
+        mock_status = mocker.patch('tkseal.tk.TKEnvironment.status')
+
         mock_status.return_value = """
         Context:    test-context
         Namespace:  test-namespace
@@ -40,10 +44,13 @@ class TestTKEnvironment:
             assert env.context == "test-context"
             assert env.namespace == "test-namespace"
 
-    @patch('subprocess.run')
-    def test_tk_environment_status_command(self, mock_run):
+
+    def test_tk_environment_status_command(self, mocker):
         """Test tk status command execution"""
-        mock_process = Mock()
+
+        mock_run = mocker.patch('subprocess.run')
+
+        mock_process = mocker.Mock()
         mock_process.stdout = "Context: test-context\nNamespace: test-namespace"
         mock_process.returncode = 0
         mock_run.return_value = mock_process
@@ -52,9 +59,11 @@ class TestTKEnvironment:
         assert "Context: test-context" in status
         assert "Namespace: test-namespace" in status
 
-    @patch.object(TKEnvironment, 'status')
-    def test_tk_environment_invalid_status(self, mock_status):
+    def test_tk_environment_invalid_status(self, mocker):
         """Test error handling for invalid tk status output"""
+
+        mock_status = mocker.patch('tkseal.tk.TKEnvironment.status')
+
         mock_status.return_value = "Invalid output"
 
         with pytest.raises(TKSealError) as exc_info:
@@ -62,9 +71,12 @@ class TestTKEnvironment:
             _ = env.context
         assert "Context not found" in str(exc_info.value)
 
-    @patch('subprocess.run')
-    def test_tk_environment_command_failure(self, mock_run):
+
+    def test_tk_environment_command_failure(self, mocker):
         """Test error handling for tk command failure"""
+
+        mock_run = mocker.patch('subprocess.run')
+
         mock_run.side_effect = subprocess.CalledProcessError(
             1, ['tk'], stderr="Command failed")
 
@@ -72,9 +84,12 @@ class TestTKEnvironment:
             TKEnvironment("/path/to/env")
         assert "tk status failed" in str(exc_info.value)
 
-    @patch.object(TKEnvironment, 'status')
-    def test_get_val_with_spaces(self, mock_status):
+
+    def test_get_val_with_spaces(self, mocker):
         """Test _get_val handles values with spaces correctly"""
+
+        mock_status = mocker.patch("tkseal.tk.TKEnvironment.status")
+
         mock_status.return_value = """
         Context:    my-cluster context
         Namespace:  my-app namespace
@@ -83,9 +98,11 @@ class TestTKEnvironment:
         assert env._get_val("Context") == "my-cluster context"
         assert env._get_val("Namespace") == "my-app namespace"
 
-    @patch.object(TKEnvironment, 'status')
-    def test_get_val_missing_key(self, mock_status):
+    def test_get_val_missing_key(self, mocker):
         """Test _get_val returns None for missing keys"""
+
+        mock_status = mocker.patch("tkseal.tk.TKEnvironment.status")
+
         mock_status.return_value = "Context: test-context"
         env = TKEnvironment("/path/to/env")
         assert env._get_val("NonexistentKey") is None
