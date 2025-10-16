@@ -100,4 +100,3 @@ class TKEnvironment:
             if match := re.match(pattern, line):
                 return match.group(1)
         return None
-        return None
