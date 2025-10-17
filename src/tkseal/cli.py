@@ -16,12 +16,13 @@ def version():
     """Show the current version."""
     click.echo(__version__)
 
+
 @cli.command()
 def ready():
     """Check that the CLI dependencies are available in your shell."""
     from tkseal.kubectl import KubeCtl
-    from tkseal.tk import TK
     from tkseal.kubeseal import KubeSeal
+    from tkseal.tk import TK
 
     if KubeCtl.exists():
         click.echo("✅ Kubectl is installed")
@@ -46,4 +47,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

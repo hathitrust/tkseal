@@ -28,11 +28,11 @@ class Secret:
         result = []
         for key, encoded_value in self._raw.get("data", {}).items():
             plain_value = base64.b64decode(encoded_value).decode()
-            result.append(SecretDataPair(
-                key=key,
-                plain_value=plain_value,
-                encoded_value=encoded_value
-            ))
+            result.append(
+                SecretDataPair(
+                    key=key, plain_value=plain_value, encoded_value=encoded_value
+                )
+            )
         return result
 
 
@@ -85,7 +85,7 @@ class Secrets:
         for secret in self.items:
             secret_dict = {
                 "name": secret.name,
-                "data": {pair.key: pair.plain_value for pair in secret.data}
+                "data": {pair.key: pair.plain_value for pair in secret.data},
             }
             output.append(secret_dict)
         return json.dumps(output, indent=2)

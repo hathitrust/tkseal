@@ -1,7 +1,7 @@
+import os
 import re
 import shutil
 import subprocess
-from typing import Optional
 
 from tkseal.exceptions import TKSealError
 
@@ -12,7 +12,7 @@ class TK:
     @staticmethod
     def exists() -> bool:
         """Check if TK executable is available in PATH"""
-        return shutil.which('tk') is not None
+        return shutil.which("tk") is not None
 
 
 class TKEnvironment:
@@ -29,17 +29,16 @@ class TKEnvironment:
             TKSealError: If path is invalid or tk status fails
         """
         # Normalize path by removing trailing slash and .jsonnet extension
-        self._path = re.sub(r'(\.jsonnet)?/?$', '', path)
+        # self._path = re.sub(r'(\.jsonnet)?/?$', '', path)
+        self._path = os.path.normpath(path).removesuffix(".jsonnet")
 
         try:
             # Get and parse status output
             self._status_lines = self.status(self._path).splitlines()
             if not self._status_lines:
-                raise TKSealError(
-                    f"No status information found for path: {path}")
+                raise TKSealError(f"No status information found for path: {path}")
         except Exception as e:
-            raise TKSealError(
-                f"Failed to initialize Tanka environment: {str(e)}")
+            raise TKSealError(f"Failed to initialize Tanka environment: {str(e)}")
 
     @staticmethod
     def status(path: str) -> str:
@@ -57,10 +56,7 @@ class TKEnvironment:
         """
         try:
             result = subprocess.run(
-                ["tk", "status", path],
-                capture_output=True,
-                text=True,
-                check=True
+                ["tk", "status", path], capture_output=True, text=True, check=True
             )
             return result.stdout
         except subprocess.CalledProcessError as e:
@@ -84,7 +80,7 @@ class TKEnvironment:
             raise TKSealError("Namespace not found in tk status output")
         return namespace
 
-    def _get_val(self, key: str) -> Optional[str]:
+    def _get_val(self, key: str) -> str | None:
         """
         Helper to extract values from tk status output lines.
 

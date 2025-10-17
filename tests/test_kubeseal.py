@@ -1,4 +1,3 @@
-import pytest
 from tkseal.kubeseal import KubeSeal
 
 
