@@ -92,6 +92,7 @@ class SecretState:
 
         # Construct file paths
         base_path = Path(normalized_path)
+        # Using Pathlib we can easily join paths and get file names, parent directories, etc.
         plain_secrets_path = base_path / configuration.PLAIN_SECRETS_FILE
         sealed_secrets_path = base_path / configuration.SEALED_SECRETS_FILE
 
