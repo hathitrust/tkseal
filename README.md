@@ -112,18 +112,62 @@ poetry run mypy src/
 
 ### diff command
 
+**Core Functionality**
+The diff command compares the local `plain_secrets.json` file in a specified Tanka environment directory with 
+the actual Kubernetes secrets deployed in the cluster.
+It shows what changes would be made if the secrets were to be synchronized, without making any changes.
+
+The flow is:
+1. Create a `SecretState` object with the `Tanka environment path`
+2. Fetch local `plain_secrets.json`
+3. Fetch existing Kubernetes secrets from the cluster
+4. Compare the two sets of secrets
+5. Display differences in a unified diff format or indicate no differences
+
+Usage Example
+
+**Show what would change in cluster**
+
+```tkseal diff /path/to/tanka/environments/production```
+
+**If there are differences, shows a unified diff**
+
+```--- cluster
+  +++ plain_secrets.json
+  @@ -1,5 +1,5 @@
+   [
+     {
+       "name": "app-secret",
+  -    "data": {"password": "old123"}
+  +    "data": {"password": "new123"}
+     }
+   ]
+```
+
+**If no differences**
+
+```tkseal diff /path/to/tanka/environments/production    
+No differences
+```
+
+**Error handling**
+
+```tkseal diff /nonexistent/path
+  Error: Path '/nonexistent/path' does not exist.
+```
+
 ### pull command
 
-** Core Functionality**
+**Core Functionality**
 The pull command extracts existing Kubernetes secrets from the cluster and writes them to a local plain_secrets.json 
 file in the specified Tanka environment directory. This allows users to synchronize their local secret 
 definitions with what is currently deployed in the cluster.
 
 The flow is:
-    1. Create a SecretState object with the Tanka environment path
-    2. Show a diff of changes (what would change in plain_secrets.json)
-    3. Prompt user for confirmation
-    4. Write kube secrets to plain_secrets.json  
+1. Create a SecretState object with the Tanka environment path
+2. Show a diff of changes (what would change in plain_secrets.json)
+3. Prompt user for confirmation
+4. Write kube secrets to plain_secrets.json  
 
 
 

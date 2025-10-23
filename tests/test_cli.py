@@ -5,6 +5,7 @@ from click.testing import (
 )  # is Click's built-in test utility that simulates running CLI commands in isolation
 
 from tkseal.cli import cli
+from tkseal.exceptions import TKSealError
 
 
 class TestVersionCommand:
@@ -65,3 +66,105 @@ class TestReadyCommand:
         runner = CliRunner()
         result = runner.invoke(cli, ["ready"])
         assert result.exit_code == 0
+
+
+class TestDiffCommand:
+    """Test cases for the diff command."""
+
+    def test_diff_command_shows_differences(self, mocker, tmp_path):
+        """Test diff command shows differences when secrets differ."""
+        # Create a temporary Tanka environment
+        env_path = tmp_path / "environments" / "test-env"
+        env_path.mkdir(parents=True)
+
+        # Mock SecretState to return controlled data
+        mock_secret_state = mocker.Mock()
+        mock_secret_state.plain_secrets.return_value = '[\n  {\n    "name": "app-secret",\n    "data": {"password": "new123"}\n  }\n]'
+        mock_secret_state.kube_secrets.return_value = '[\n  {\n    "name": "app-secret",\n    "data": {"password": "old123"}\n  }\n]'
+
+        mocker.patch(
+            "tkseal.cli.SecretState.from_path", return_value=mock_secret_state
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["diff", str(env_path)])
+
+        assert result.exit_code == 0
+        assert "old123" in result.output  # Shows old value
+        assert "new123" in result.output  # Shows new value
+        assert ("-" in result.output or "+" in result.output)  # Shows diff markers
+
+    def test_diff_command_no_differences(self, mocker, tmp_path):
+        """Test diff command shows 'No differences' when secrets are identical."""
+        # Create a temporary Tanka environment
+        env_path = tmp_path / "environments" / "test-env"
+        env_path.mkdir(parents=True)
+
+        # Mock SecretState with identical secrets
+        mock_secret_state = mocker.Mock()
+        identical_secrets = '[\n  {\n    "name": "app-secret",\n    "data": {"password": "same123"}\n  }\n]'
+        mock_secret_state.plain_secrets.return_value = identical_secrets
+        mock_secret_state.kube_secrets.return_value = identical_secrets
+
+        mocker.patch(
+            "tkseal.cli.SecretState.from_path", return_value=mock_secret_state
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["diff", str(env_path)])
+
+        assert result.exit_code == 0
+        assert "No differences" in result.output
+
+    def test_diff_command_invalid_path(self):
+        """Test diff command with non-existent path."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["diff", "/nonexistent/path"])
+
+        # Click returns exit code 2 for usage errors (invalid arguments)
+        assert result.exit_code == 2
+        assert "does not exist" in result.output.lower()
+
+    def test_diff_command_secret_state_creation_failure(self, mocker, tmp_path):
+        """Test diff command handles SecretState creation failure gracefully."""
+        # Create a temporary Tanka environment
+        env_path = tmp_path / "environments" / "test-env"
+        env_path.mkdir(parents=True)
+
+        # Mock SecretState.from_path to raise TKSealError
+        mocker.patch(
+            "tkseal.cli.SecretState.from_path",
+            side_effect=TKSealError("Failed to initialize Tanka environment"),
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["diff", str(env_path)])
+
+        # Should fail with exit code 1
+        assert result.exit_code == 1
+        assert "Error" in result.output
+        assert "Failed to initialize Tanka environment" in result.output
+
+    def test_diff_command_kubectl_error(self, mocker, tmp_path):
+        """Test diff command handles kubectl errors gracefully."""
+        # Create a temporary Tanka environment
+        env_path = tmp_path / "environments" / "test-env"
+        env_path.mkdir(parents=True)
+
+        # Mock SecretState that raises error when accessing kube_secrets
+        mock_secret_state = mocker.Mock()
+        mock_secret_state.kube_secrets.side_effect = TKSealError(
+            "kubectl command failed"
+        )
+
+        mocker.patch(
+            "tkseal.cli.SecretState.from_path", return_value=mock_secret_state
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["diff", str(env_path)])
+
+        # Should fail with exit code 1
+        assert result.exit_code == 1
+        assert "Error" in result.output
+        assert "kubectl command failed" in result.output
