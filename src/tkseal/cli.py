@@ -7,6 +7,7 @@ import click
 from tkseal import __version__
 from tkseal.diff import Diff
 from tkseal.exceptions import TKSealError
+from tkseal.pull import Pull
 from tkseal.secret_state import SecretState
 
 
@@ -65,6 +66,46 @@ def diff(path: str) -> None:
         # Display results
         if result.has_differences:
             click.echo(result.diff_output)
+        else:
+            click.echo("No differences")
+
+    except TKSealError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("path", type=click.Path(exists=True))
+def pull(path: str) -> None:
+    """Pull secrets from cluster to plain_secrets.json.
+
+    PATH: Path to Tanka environment directory or .jsonnet file
+
+    This extracts unencrypted secrets from the Kubernetes cluster
+    and saves them to plain_secrets.json in the environment directory.
+    """
+    try:
+        # Create SecretState from path
+        secret_state = SecretState.from_path(path)
+
+        # Show informational message
+        click.secho(
+            'This shows how "plain_secrets.json" would change based on what\'s in the kubernetes cluster',
+            fg="yellow",
+        )
+
+        # Create Pull instance and show differences
+        pull_obj = Pull(secret_state)
+        result = pull_obj.run()
+
+        # Display diff results
+        if result.has_differences:
+            click.echo(result.diff_output)
+
+            # Confirm before writing
+            if click.confirm("Are you sure?"):
+                pull_obj.write()
+                click.echo("Successfully pulled secrets to plain_secrets.json")
         else:
             click.echo("No differences")
 
