@@ -29,20 +29,27 @@ class TestKubectl:
         test_secrets_yaml, test_secrets_dict = load_secret_file
 
         mock_run = mocker.patch("tkseal.kubectl.KubeCtl._run_command")
-        #with patch('tkseal.kubectl.KubeCtl._run_command') as mock_run:
+        # with patch('tkseal.kubectl.KubeCtl._run_command') as mock_run:
         mock_run.return_value = test_secrets_yaml
         result = KubeCtl.get_secrets("test-context", "test-namespace")
 
         mock_run.assert_called_once_with(
-            ["kubectl", "--context=test-context",
-                    "--namespace=test-namespace", "get", "secrets", "-o", "yaml"]
+            [
+                "kubectl",
+                "--context=test-context",
+                "--namespace=test-namespace",
+                "get",
+                "secrets",
+                "-o",
+                "yaml",
+            ]
         )
         assert result == test_secrets_dict
         # Verify structure of returned data
-        assert result['apiVersion'] == 'v1'
-        assert result['kind'] == 'List'
-        assert 'items' in result
-        assert len(result['items']) == 2
+        assert result["apiVersion"] == "v1"
+        assert result["kind"] == "List"
+        assert "items" in result
+        assert len(result["items"]) == 2
 
     def test_get_secrets_kubectl_error(self, mocker):
         mock_run = mocker.patch("tkseal.kubectl.KubeCtl._run_command")
@@ -55,7 +62,6 @@ class TestKubectl:
         assert "Failed to get secrets" in str(exc_info.value)
 
     def test_get_secrets_invalid_yaml(self, mocker):
-
         mock_run = mocker.patch("tkseal.kubectl.KubeCtl._run_command")
         mock_run.return_value = "invalid: yaml: :"
 

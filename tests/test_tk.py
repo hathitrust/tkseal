@@ -1,4 +1,5 @@
 import subprocess
+
 import pytest
 
 from tkseal.exceptions import TKSealError
@@ -9,7 +10,9 @@ class TestTK:
     def test_tk_exists_returns_true_when_installed(self, mocker):
         """Return True when tk is on PATH."""
 
-        mock_which = mocker.patch("tkseal.tk.shutil.which", return_value="/usr/local/bin/tk")
+        mock_which = mocker.patch(
+            "tkseal.tk.shutil.which", return_value="/usr/local/bin/tk"
+        )
 
         assert TK.exists() is True
         mock_which.assert_called_once_with("tk")
@@ -23,10 +26,9 @@ class TestTK:
 
 
 class TestTKEnvironment:
-
     def test_tk_environment_initialization(self, mocker):
         """Test TKEnvironment initialization with various path formats"""
-        mock_status = mocker.patch('tkseal.tk.TKEnvironment.status')
+        mock_status = mocker.patch("tkseal.tk.TKEnvironment.status")
 
         mock_status.return_value = """
         Context:    test-context
@@ -36,7 +38,7 @@ class TestTKEnvironment:
             "/path/to/env",
             "/path/to/env/",
             "/path/to/env.jsonnet",
-            "/path/to/env.jsonnet/"
+            "/path/to/env.jsonnet/",
         ]
 
         for path in paths:
@@ -44,11 +46,10 @@ class TestTKEnvironment:
             assert env.context == "test-context"
             assert env.namespace == "test-namespace"
 
-
     def test_tk_environment_status_command(self, mocker):
         """Test tk status command execution"""
 
-        mock_run = mocker.patch('subprocess.run')
+        mock_run = mocker.patch("subprocess.run")
 
         mock_process = mocker.Mock()
         mock_process.stdout = "Context: test-context\nNamespace: test-namespace"
@@ -62,7 +63,7 @@ class TestTKEnvironment:
     def test_tk_environment_invalid_status(self, mocker):
         """Test error handling for invalid tk status output"""
 
-        mock_status = mocker.patch('tkseal.tk.TKEnvironment.status')
+        mock_status = mocker.patch("tkseal.tk.TKEnvironment.status")
 
         mock_status.return_value = "Invalid output"
 
@@ -71,19 +72,18 @@ class TestTKEnvironment:
             _ = env.context
         assert "Context not found" in str(exc_info.value)
 
-
     def test_tk_environment_command_failure(self, mocker):
         """Test error handling for tk command failure"""
 
-        mock_run = mocker.patch('subprocess.run')
+        mock_run = mocker.patch("subprocess.run")
 
         mock_run.side_effect = subprocess.CalledProcessError(
-            1, ['tk'], stderr="Command failed")
+            1, ["tk"], stderr="Command failed"
+        )
 
         with pytest.raises(TKSealError) as exc_info:
             TKEnvironment("/path/to/env")
         assert "tk status failed" in str(exc_info.value)
-
 
     def test_get_val_with_spaces(self, mocker):
         """Test _get_val handles values with spaces correctly"""

@@ -28,16 +28,12 @@ class KubeCtl:
             TKSealError: If the command fails to execute or returns non-zero
         """
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             return result.stdout
         except subprocess.CalledProcessError as e:
             raise TKSealError(
-                f"Command failed with exit code {e.returncode}: {e.stderr}")
+                f"Command failed with exit code {e.returncode}: {e.stderr}"
+            )
         except Exception as e:
             raise TKSealError(f"Failed to execute command: {str(e)}")
 
@@ -65,9 +61,9 @@ class KubeCtl:
                 "get",
                 "secrets",
                 "-o",
-                "yaml"
+                "yaml",
             ]
-            
+
             # Execute kubectl command and get output
             output = KubeCtl._run_command(cmd)
 

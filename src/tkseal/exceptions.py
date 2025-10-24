@@ -3,4 +3,5 @@
 
 class TKSealError(Exception):
     """Base exception for TKSeal errors."""
+
     pass
