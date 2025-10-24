@@ -79,7 +79,7 @@ class TestSecretStateInitialization:
         mocker.patch("tkseal.secret_state.TKEnvironment", return_value=mock_tk_env)
 
         # Ruby regex: /\/(\w+.jsonnet)?$/ matches trailing slash with optional .jsonnet file
-        path_complex = str(temp_tanka_env) + "/environment.jsonnet"
+        path_complex = str(temp_tanka_env) + "/main.jsonnet"
         state = SecretState.from_path(path_complex)
 
         assert state.tk_env_path == str(temp_tanka_env)
@@ -97,7 +97,7 @@ class TestSecretStateInitialization:
             normalize_tk_env_path("/path/to/env") == "/path/to/env"
         )  # No change
         assert (
-            normalize_tk_env_path("/path/to/env.jsonnet") == "/path/to"
+            normalize_tk_env_path("/path/to/env.jsonnet") == "/path/to/env.jsonnet"
         )
 
     def test_file_paths_use_configuration_constants(

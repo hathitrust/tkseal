@@ -26,7 +26,7 @@ def normalize_tk_env_path(path: str) -> str:
     # Remove trailing slash
     path = os.path.normpath(path)
     # Remove trailing *.jsonnet file if present
-    if path.endswith(".jsonnet"):
+    if path.endswith("main.jsonnet"):
         path = os.path.dirname(path)
     return path
 class SecretState:
