@@ -45,7 +45,7 @@ class TestReadyCommand:
         assert "✅ tk is installed" in result.output
         assert "✅ Kubeseal is installed" in result.output
 
-    def test_ready_command_missing_dependencies_installed(self, mocker):
+    def test_ready_command_whit_missing_kubeseal(self, mocker):
         """Test that missing dependencies are installed."""
 
         mock_kubeseal = mocker.patch("tkseal.kubeseal.KubeSeal.exists")

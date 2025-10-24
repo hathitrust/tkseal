@@ -29,9 +29,6 @@ def normalize_tk_env_path(path: str) -> str:
     if path.endswith(".jsonnet"):
         path = os.path.dirname(path)
     return path
-
-
-
 class SecretState:
     """Manages secret state for a Tanka environment.
 
@@ -78,7 +75,6 @@ class SecretState:
             TKSealError: If the path is invalid or tk fails
         """
         # Normalize path: remove trailing slash and optional .jsonnet file
-        # Ruby regex: /\/(\w+.jsonnet)?$/ matches:
         # - trailing slash with optional word.jsonnet
         # We need to handle cases like:
         # - "/path/to/env/" -> "/path/to/env"

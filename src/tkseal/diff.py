@@ -4,6 +4,7 @@ import difflib
 from dataclasses import dataclass
 
 from tkseal.secret_state import SecretState
+from tkseal.configuration import PLAIN_SECRETS_FILE
 
 
 @dataclass
@@ -30,7 +31,7 @@ class Diff:
             from_text=kube_secrets,
             to_text=plain_secrets,
             from_label="cluster",
-            to_label="plain_secrets.json",
+            to_label=PLAIN_SECRETS_FILE,
         )
 
     def pull(self) -> DiffResult:
@@ -41,7 +42,7 @@ class Diff:
         return self._generate_diff(
             from_text=plain_secrets,
             to_text=kube_secrets,
-            from_label="plain_secrets.json",
+            from_label=PLAIN_SECRETS_FILE,
             to_label="cluster",
         )
 

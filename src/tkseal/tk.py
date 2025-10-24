@@ -90,7 +90,7 @@ class TKEnvironment:
         Returns:
             Optional[str]: The value if found, None otherwise
         """
-        # TODO Review if we can improve this implementation based on regular expression
+
         pattern = rf"^\s*{key}:\s+(.+?)\s*$"
         for line in self._status_lines:
             if match := re.match(pattern, line):

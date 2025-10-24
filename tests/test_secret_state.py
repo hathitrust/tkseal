@@ -1,13 +1,14 @@
 """Tests for SecretState class."""
 
 import json
+import pytest
+
 from pathlib import Path
 from unittest.mock import Mock
 
-import pytest
-
 from tkseal.secret_state import SecretState
 from tkseal.tk import TKEnvironment
+from tkseal.secret_state import normalize_tk_env_path
 
 
 @pytest.fixture
@@ -82,6 +83,22 @@ class TestSecretStateInitialization:
         state = SecretState.from_path(path_complex)
 
         assert state.tk_env_path == str(temp_tanka_env)
+
+    def test_normalize_tk_env_path_function(self):
+        """Test the normalize_tk_env_path function directly."""
+
+        assert (
+            normalize_tk_env_path("/path/to/env/") == "/path/to/env"
+        )  # Trailing slash removed
+        assert (
+            normalize_tk_env_path("/path/to/env/main.jsonnet") == "/path/to/env"
+        )  # .jsonnet removed
+        assert (
+            normalize_tk_env_path("/path/to/env") == "/path/to/env"
+        )  # No change
+        assert (
+            normalize_tk_env_path("/path/to/env.jsonnet") == "/path/to"
+        )
 
     def test_file_paths_use_configuration_constants(
         self, mocker, temp_tanka_env, mock_tk_env
