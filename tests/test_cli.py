@@ -364,4 +364,4 @@ class TestPullCommand:
 
         assert result.exit_code == 0
         assert "plain_secrets.json" in result.output
-        assert "kubernetes cluster" in result.output
+        assert "Kubernetes cluster" in result.output
