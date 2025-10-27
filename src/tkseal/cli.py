@@ -90,7 +90,7 @@ def pull(path: str) -> None:
 
         # Show informational message
         click.secho(
-            'This shows how "plain_secrets.json" would change based on what\'s in the kubernetes cluster',
+            'This shows how "plain_secrets.json" would change based on what\'s in the Kubernetes cluster',
             fg="yellow",
         )
 

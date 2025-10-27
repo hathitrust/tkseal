@@ -24,7 +24,7 @@ class Pull:
         file if secrets were pulled from the cluster.
 
         Returns:
-            DiffResult: Result containing different information
+            DiffResult: Result containing information about the difference
 
         Raises:
             TKSealError: If there's an error retrieving secrets from the cluster
