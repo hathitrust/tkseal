@@ -13,7 +13,7 @@ from tkseal.secret_state import SecretState
 
 @pytest.fixture
 def mock_secret_state(mocker):
-    """Create mock SecretState with controlled behavior."""
+    """Create a mock SecretState with controlled behavior."""
     mock_state = mocker.Mock(spec=SecretState)
     mock_state.plain_secrets_file_path = Path("/fake/path/plain_secrets.json")
     return mock_state
@@ -60,7 +60,7 @@ class TestPullInitialization:
 class TestPullRun:
     """Test Pull.run() method."""
 
-    def test_run_no_differences(self, mocker, mock_secret_state, sample_plain_secrets):
+    def test_run_no_differences(self, mocker, mock_secret_state):
         """Test run() when plain and kube secrets are identical."""
         # Setup: Mock Diff to return no differences
         mock_diff = mocker.Mock()
@@ -78,9 +78,7 @@ class TestPullRun:
         assert result.has_differences is False
         assert result.diff_output == ""
 
-    def test_run_with_differences(
-        self, mocker, mock_secret_state, sample_plain_secrets, sample_kube_secrets
-    ):
+    def test_run_with_differences(self, mocker, mock_secret_state):
         """Test run() when secrets differ."""
         # Setup: Mock Diff to return differences
         mock_diff = mocker.Mock()
@@ -141,7 +139,7 @@ class TestPullWrite:
         mock_path.write_text.assert_called_once_with(sample_kube_secrets)
 
     def test_write_with_real_temp_file(
-        self, mocker, tmp_path, mock_secret_state, sample_kube_secrets
+        self, tmp_path, mock_secret_state, sample_kube_secrets
     ):
         """Test write() actually writes to a real file."""
         # Setup: Create real temp file path
@@ -231,7 +229,7 @@ class TestPullWorkflow:
     def test_full_pull_workflow(
         self, mocker, tmp_path, sample_plain_secrets, sample_kube_secrets
     ):
-        """Test complete workflow: run() shows diff, write() saves to file."""
+        """Test complete workflow: run() shows diff, write() saves it to file."""
         # Setup: Create a real SecretState-like mock
         mock_state = mocker.Mock(spec=SecretState)
         mock_state.plain_secrets_file_path = tmp_path / "plain_secrets.json"
@@ -256,7 +254,7 @@ class TestPullWorkflow:
         # Step 2: Write to save changes
         pull.write()
 
-        # Verify file was written with kube secrets
+        # Verify if the file was written with kube secrets
         assert mock_state.plain_secrets_file_path.exists()
         written_content = mock_state.plain_secrets_file_path.read_text()
         assert written_content == sample_kube_secrets

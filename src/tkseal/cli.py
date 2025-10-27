@@ -77,7 +77,7 @@ def diff(path: str) -> None:
 @cli.command()
 @click.argument("path", type=click.Path(exists=True))
 def pull(path: str) -> None:
-    """Pull secrets from cluster to plain_secrets.json.
+    """Pull secrets from the cluster to plain_secrets.json.
 
     PATH: Path to Tanka environment directory or .jsonnet file
 

@@ -1,5 +1,3 @@
-"""Pull module for extracting cluster secrets to local files."""
-
 from tkseal.diff import Diff, DiffResult
 from tkseal.secret_state import SecretState
 
@@ -26,16 +24,16 @@ class Pull:
         file if secrets were pulled from the cluster.
 
         Returns:
-            DiffResult: Result containing differences information
+            DiffResult: Result containing different information
 
         Raises:
-            TKSealError: If there's an error retrieving secrets from cluster
+            TKSealError: If there's an error retrieving secrets from the cluster
         """
         diff = Diff(self.secret_state)
         return diff.pull()
 
     def write(self) -> None:
-        """Write cluster secrets to plain_secrets.json file.
+        """Write cluster secrets to the plain_secrets.json file.
 
         This method retrieves secrets from the Kubernetes cluster and writes
         them to the local plain_secrets.json file, overwriting any existing content.
