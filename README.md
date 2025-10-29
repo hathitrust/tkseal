@@ -106,9 +106,11 @@ poetry run mypy src/
 
   3. `kubeseal (Sealed Secrets)`
 
-  - Purpose: Encrypt secrets that can only be decrypted by the cluster
+  - Purpose: Encrypt Kubernetes Secret manifests into SealedSecret manifests, 
+which can then be safely stored in version control systems like Git. 
   - Used for: Converting plain text secrets to sealed secrets
   - Example usage: `printf "secret" | kubeseal --raw --namespace ns --name secret-name --context ctx`
+
 
 ### diff command
 
@@ -170,6 +172,20 @@ The flow is:
 4. Write kube secrets to plain_secrets.json  
 
 
+### seal command
 
+**Core Functionality**
+The seal command reads the local plain_secrets.json file in a specified Tanka environment directory,
+seals the secrets using kubeseal, and writes the resulting sealed secrets to sealed_secrets.json. 
+This allows users to securely store secrets in version control.
+
+We used the `bitnami.com/v1alpha1` format to be compatible with the Bitnami Sealed Secrets controller, 
+which is used in our Kubernetes cluster.
+
+The flow is:
+1. Create a SecretState object with the Tanka environment path
+2. Read plain_secrets.json
+3. Seal each secret using kubeseal
+4. Write sealed secrets to sealed_secrets.json
 
 

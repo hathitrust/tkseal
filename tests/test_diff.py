@@ -8,21 +8,8 @@ import pytest
 from tkseal.diff import Diff, DiffResult
 from tkseal.secret_state import SecretState
 
-
-@pytest.fixture
-def sample_plain_secrets():
-    """Sample plain_secrets.json content."""
-    return json.dumps(
-        [
-            {
-                "name": "app-secret",
-                "data": {"username": "admin", "password": "secret123"},
-            }
-        ],
-        indent=2,
-    )
-
-
+# Keep this fixture in this file for clarity; all the tests here use them to simulate
+# different secret states - additions, removals, modifications.
 @pytest.fixture
 def sample_kube_secrets():
     """Sample kube secrets JSON content."""
@@ -46,7 +33,9 @@ def sample_plain_secrets_with_addition():
                 "name": "app-secret",
                 "data": {"username": "admin", "password": "secret123"},
             },
-            {"name": "db-secret", "data": {"host": "localhost", "port": "5432"}},
+            {   "name": "db-secret",
+                "data": {"host": "localhost", "port": "5432"}
+            },
         ],
         indent=2,
     )

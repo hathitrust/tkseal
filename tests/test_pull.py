@@ -19,34 +19,6 @@ def mock_secret_state(mocker):
     return mock_state
 
 
-@pytest.fixture
-def sample_plain_secrets():
-    """Sample plain_secrets.json content."""
-    return json.dumps(
-        [
-            {
-                "name": "app-secret",
-                "data": {"username": "admin", "password": "secret123"},
-            }
-        ],
-        indent=2,
-    )
-
-
-@pytest.fixture
-def sample_kube_secrets():
-    """Sample kube secrets JSON content."""
-    return json.dumps(
-        [
-            {
-                "name": "app-secret",
-                "data": {"username": "admin", "password": "newsecret456"},
-            }
-        ],
-        indent=2,
-    )
-
-
 class TestPullInitialization:
     """Test Pull class initialization."""
 
