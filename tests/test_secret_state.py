@@ -1,39 +1,9 @@
 """Tests for SecretState class."""
-
-import json
-import pytest
-
 from pathlib import Path
 from unittest.mock import Mock
 
 from tkseal.secret_state import SecretState
-from tkseal.tk import TKEnvironment
 from tkseal.secret_state import normalize_tk_env_path
-
-
-@pytest.fixture
-def mock_tk_env(mocker):
-    """Create a mock TKEnvironment."""
-    mock_env = mocker.Mock(spec=TKEnvironment)
-    mock_env.context = "test-context"
-    mock_env.namespace = "test-namespace"
-    return mock_env
-
-
-@pytest.fixture
-def temp_tanka_env(tmp_path):
-    """Create a temporary Tanka environment directory structure."""
-    env_path = tmp_path / "environments" / "test-env"
-    env_path.mkdir(parents=True)
-
-    # Create a sample plain_secrets.json
-    plain_secrets = [
-        {"name": "test-secret", "data": {"username": "admin", "password": "secret123"}}
-    ]
-    (env_path / "plain_secrets.json").write_text(json.dumps(plain_secrets, indent=2))
-
-    return env_path
-
 
 class TestSecretStateInitialization:
     """Test SecretState initialization and path handling."""
@@ -122,7 +92,7 @@ class TestSecretStateProperties:
 
         state = SecretState.from_path(str(temp_tanka_env))
 
-        assert state.context == "test-context"
+        assert state.context == "some-context"
 
     def test_namespace_property(self, mocker, temp_tanka_env, mock_tk_env):
         """Test that namespace property delegates to TKEnvironment."""
@@ -130,7 +100,7 @@ class TestSecretStateProperties:
 
         state = SecretState.from_path(str(temp_tanka_env))
 
-        assert state.namespace == "test-namespace"
+        assert state.namespace == "some-namespace"
 
 
 class TestSecretStatePlainSecrets:
