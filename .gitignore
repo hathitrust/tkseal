@@ -229,3 +229,7 @@ __marimo__/
 /ruby*
 .DS_Store
 .vscode/settings.json
+
+sealedsecret-test/lib/
+sealedsecret-test/vendor/
+sealedsecret-test/jsonnetfile*
