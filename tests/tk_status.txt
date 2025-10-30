@@ -1,0 +1,16 @@
+Context: some-context
+Cluster: some-cluster
+Environment:
+  APIServer: https://some-api-server.com
+  ApplyStrategy: 
+  ContextNames: []
+  DiffStrategy: native
+  ExpectVersions: map[Tanka:]
+  InjectLabels: false
+  Namespace: some-namespace
+  ResourceDefaults: map[Annotations:map[] Labels:map[]]
+Resources:
+  NAMESPACE           OBJECTSPEC
+  some-namespace    ConfigMap/get-this-config
+  some-namespace    Service/web
+  some-namespace    Deployment/web

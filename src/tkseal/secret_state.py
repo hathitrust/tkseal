@@ -29,6 +29,8 @@ def normalize_tk_env_path(path: str) -> str:
     if path.endswith("main.jsonnet"):
         path = os.path.dirname(path)
     return path
+
+
 class SecretState:
     """Manages secret state for a Tanka environment.
 

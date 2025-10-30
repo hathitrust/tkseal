@@ -33,9 +33,9 @@ class KubeCtl:
         except subprocess.CalledProcessError as e:
             raise TKSealError(
                 f"Command failed with exit code {e.returncode}: {e.stderr}"
-            )
+            ) from e
         except Exception as e:
-            raise TKSealError(f"Failed to execute command: {str(e)}")
+            raise TKSealError(f"Failed to execute command: {str(e)}") from e
 
     @staticmethod
     def get_secrets(context: str, namespace: str) -> dict:
@@ -71,10 +71,10 @@ class KubeCtl:
             try:
                 return yaml.safe_load(output)
             except yaml.YAMLError as e:
-                raise TKSealError(f"Failed to parse secrets YAML: {str(e)}")
+                raise TKSealError(f"Failed to parse secrets YAML: {str(e)}") from e
 
         except TKSealError:
             # Re-raise TKSealError without wrapping
             raise
         except Exception as e:
-            raise TKSealError(f"Failed to get secrets: {str(e)}")
+            raise TKSealError(f"Failed to get secrets: {str(e)}") from e
