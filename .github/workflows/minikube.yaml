@@ -1,0 +1,71 @@
+name: Integration test w minikube
+
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+      # Setup Python too. Keep ruby here 
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.4
+        bundler-cache: true
+    - name: Set up minikube
+      uses: medyagh/setup-minikube@latest
+    - name: Install sealed secrets controller
+      run: |
+        kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.32.2/controller.yaml
+        kubectl -n kube-system wait --for=condition=ready pod -l name=sealed-secrets-controller
+        kubectl -n kube-system logs deployment/sealed-secrets-controller
+    - name: Install kubeseal
+      run: |
+        KUBESEAL_VERSION='0.32.2' # Set this to, for example, KUBESEAL_VERSION='0.23.0'
+        curl -OL "https://github.com/bitnami-labs/sealed-secrets/releases/download/v${KUBESEAL_VERSION:?}/kubeseal-${KUBESEAL_VERSION:?}-linux-amd64.tar.gz"
+        tar -xvzf kubeseal-${KUBESEAL_VERSION:?}-linux-amd64.tar.gz kubeseal
+        install -m 755 kubeseal $HOME/bin/kubeseal
+    - name: Install tanka
+      run: |
+        curl -Lo ./tk https://github.com/grafana/tanka/releases/latest/download/tk-linux-amd64
+        install -m 755 tk $HOME/bin/tk
+    - name: Check that we're ready # with python-tk and tkseal installed
+      run: |
+        bundle exec ./exe/tkseal ready
+    - name: Set up tanka env
+      run: |
+        mkdir tkroot
+        cd tkroot
+        tk init --k8s 1.33
+        apiserver=$(kubectl cluster-info | grep 'Kubernetes control plane is running at' | awk '{print $NF}')
+        tk env set environments/default --server=$apiserver
+    - name: Create sealed secret
+      run: |
+        cd tkroot
+        cat<<EOT > environments/default/plain_secrets.json
+        [
+          {
+            "name": "testsecret",
+            "data": {
+              "testvalue": "mashed potatoes"
+            }
+          }
+        ]
+        EOT
+        echo y | bundle exec ../exe/tkseal seal ./environments/default/
+        # should show a diff with testsecret
+        # should have sealed_secrets.json with expected json
+
+        cat<<EOT > environments/default/main.jsonnet
+        { secrets: import 'sealed_secrets.json' }
+        EOT
+
+        tk apply --auto-approve=always ./environments/default/
+        # diff should show the new sealedsecret
+
+        echo "🔓 The secret is: " $(kubectl get -o jsonpath={.data.testvalue} secret testsecret | base64 -d)
+        # should be mashed potatoes
+        #
+        echo "🪵 Logs from sealed secrets controller"
+        kubectl -n kube-system logs deployment/sealed-secrets-controller
