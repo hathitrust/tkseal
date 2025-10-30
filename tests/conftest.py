@@ -5,7 +5,9 @@ from pathlib import Path
 
 import pytest
 import yaml
+from click.testing import CliRunner
 
+from tkseal.diff import DiffResult
 from tkseal.secret_state import SecretState
 from tkseal.tk import TKEnvironment
 
@@ -155,3 +157,75 @@ def sample_kube_secrets():
         ],
         indent=2,
     )
+
+
+@pytest.fixture
+def sample_plain_secrets_multiple():
+    """Sample plain_secrets.json with multiple secrets."""
+    return json.dumps(
+        [
+            {
+                "name": "app-secret",
+                "data": {"username": "admin", "password": "secret123"},
+            },
+            {
+                "name": "db-secret",
+                "data": {"db_host": "localhost", "db_password": "dbpass456"},
+            },
+        ],
+        indent=2,
+    )
+
+
+# CLI Testing Fixtures
+
+
+@pytest.fixture
+def mock_external_dependencies(mocker):
+    """Mock external dependencies like kubeseal, tk, and kubectl existence checks."""
+
+    mock_kubeseal = mocker.patch("tkseal.kubeseal.KubeSeal.exists")
+    mock_tk = mocker.patch("tkseal.tk.TK.exists")
+    mock_kubectl = mocker.patch("tkseal.kubectl.KubeCtl.exists")
+    return mock_kubeseal, mock_tk, mock_kubectl
+
+
+@pytest.fixture
+def cli_runner():
+    """Return a CliRunner instance for CLI testing."""
+    return CliRunner()
+
+
+@pytest.fixture
+def diff_result_with_changes():
+    """Return a DiffResult with differences."""
+    return DiffResult(has_differences=True, diff_output="-old\n+new")
+
+
+@pytest.fixture
+def diff_result_no_changes():
+    """Return a DiffResult with no differences."""
+    return DiffResult(has_differences=False, diff_output="")
+
+
+@pytest.fixture
+def mock_pull_cli(mocker, diff_result_with_changes):
+    """Mock Pull class for CLI tests and return the mock instance."""
+    mock_pull = mocker.Mock()
+    mock_pull.run.return_value = diff_result_with_changes
+    mocker.patch("tkseal.cli.Pull", return_value=mock_pull)
+    return mock_pull
+
+
+@pytest.fixture
+def mock_seal_cli(mocker, diff_result_with_changes):
+    """Mock Seal class for CLI tests and return the mock instance."""
+    mock_seal = mocker.Mock()
+    mocker.patch("tkseal.cli.Seal", return_value=mock_seal)
+
+    # Also mock Diff for seal command
+    mock_diff = mocker.Mock()
+    mock_diff.plain.return_value = diff_result_with_changes
+    mocker.patch("tkseal.cli.Diff", return_value=mock_diff)
+
+    return mock_seal, mock_diff

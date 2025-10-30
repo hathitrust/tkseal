@@ -130,7 +130,7 @@ class TestPullWorkflow:
     """Test complete Pull workflow."""
 
     def test_full_pull_workflow(
-        self, mocker, mock_secret_state, sample_plain_secrets, sample_kube_secrets
+        self, mock_secret_state, sample_plain_secrets, sample_kube_secrets
     ):
         """Test complete workflow: run() shows diff, write() saves it to file."""
         mock_secret_state.plain_secrets.return_value = sample_plain_secrets
