@@ -1,8 +1,6 @@
 """Seal module for converting plain secrets to sealed secrets."""
 
 import json
-from pathlib import Path
-from typing import Any
 
 from tkseal.kubeseal import KubeSeal
 from tkseal.secret_state import SecretState
@@ -66,9 +64,7 @@ class Seal:
             # Seal each data key-value pair
             encrypted_data = {}
             for key, value in secret["data"].items():
-                encrypted_data[key] = self.kubeseal(
-                    name=secret["name"], value=value
-                )
+                encrypted_data[key] = self.kubeseal(name=secret["name"], value=value)
 
             # Create SealedSecret structure
             sealed_secret = {

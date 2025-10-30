@@ -115,7 +115,7 @@ class TestKubeSealSealing:
         )
 
         # Test with values containing quotes, newlines, etc.
-        special_value = 'password"with\'quotes\nand\nnewlines'
+        special_value = "password\"with'quotes\nand\nnewlines"
         result = KubeSeal.seal(
             context="test-context",
             namespace="test-namespace",

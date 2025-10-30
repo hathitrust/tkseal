@@ -1,9 +1,10 @@
 """Tests for SecretState class."""
+
 from pathlib import Path
 from unittest.mock import Mock
 
-from tkseal.secret_state import SecretState
-from tkseal.secret_state import normalize_tk_env_path
+from tkseal.secret_state import SecretState, normalize_tk_env_path
+
 
 class TestSecretStateInitialization:
     """Test SecretState initialization and path handling."""
@@ -63,12 +64,8 @@ class TestSecretStateInitialization:
         assert (
             normalize_tk_env_path("/path/to/env/main.jsonnet") == "/path/to/env"
         )  # .jsonnet removed
-        assert (
-            normalize_tk_env_path("/path/to/env") == "/path/to/env"
-        )  # No change
-        assert (
-            normalize_tk_env_path("/path/to/env.jsonnet") == "/path/to/env.jsonnet"
-        )
+        assert normalize_tk_env_path("/path/to/env") == "/path/to/env"  # No change
+        assert normalize_tk_env_path("/path/to/env.jsonnet") == "/path/to/env.jsonnet"
 
     def test_file_paths_use_configuration_constants(
         self, mocker, temp_tanka_env, mock_tk_env

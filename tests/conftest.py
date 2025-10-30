@@ -1,10 +1,10 @@
+import json
 import os
 import shutil
+from pathlib import Path
+
 import pytest
 import yaml
-import json
-
-from pathlib import Path
 
 from tkseal.secret_state import SecretState
 from tkseal.tk import TKEnvironment
@@ -23,13 +23,15 @@ Notes:
   - All tests use tk_status.txt to ensure consistent context/namespace values.
   """
 
+
 @pytest.fixture
 def tk_status_file(tmp_path):
-    """"Copy the sample `tests/tk_status.txt` into a temporary file and return its path."""
+    """Copy the sample tests/tk_status.txt into a temporary file and return its path."""
     src = Path(__file__).parent / "tk_status.txt"
     dest = tmp_path / "tk_status.txt"
     shutil.copy(src, dest)
     return dest
+
 
 @pytest.fixture
 def temp_tanka_env(tmp_path):
@@ -45,25 +47,27 @@ def temp_tanka_env(tmp_path):
 
     return env_path
 
+
 @pytest.fixture
 def mock_tk_env(mocker, tk_status_file):
-      """Create a mock TKEnvironment using values from tests/tk_status.txt."""
-      # Parse tk_status.txt to get real context/namespace values
-      status_content = tk_status_file.read_text()
+    """Create a mock TKEnvironment using values from tests/tk_status.txt."""
+    # Parse tk_status.txt to get real context/namespace values
+    status_content = tk_status_file.read_text()
 
-      # Extract context and namespace from the file
-      context = None
-      namespace = None
-      for line in status_content.splitlines():
-          if line.strip().startswith("Context:"):
-              context = line.split(":", 1)[1].strip()
-          elif line.strip().startswith("Namespace:"):
-              namespace = line.split(":", 1)[1].strip()
+    # Extract context and namespace from the file
+    context = None
+    namespace = None
+    for line in status_content.splitlines():
+        if line.strip().startswith("Context:"):
+            context = line.split(":", 1)[1].strip()
+        elif line.strip().startswith("Namespace:"):
+            namespace = line.split(":", 1)[1].strip()
 
-      mock_env = mocker.Mock(spec=TKEnvironment)
-      mock_env.context = context or "some-context"
-      mock_env.namespace = namespace or "some-namespace"
-      return mock_env
+    mock_env = mocker.Mock(spec=TKEnvironment)
+    mock_env.context = context or "some-context"
+    mock_env.namespace = namespace or "some-namespace"
+    return mock_env
+
 
 @pytest.fixture
 def simple_mock_secret_state(mocker):
@@ -80,6 +84,7 @@ def simple_mock_secret_state(mocker):
     mock_state.plain_secrets.return_value = "[]"
     mock_state.kube_secrets.return_value = "[]"
     return mock_state
+
 
 @pytest.fixture
 def mock_secret_state(mocker, tk_status_file, mock_tk_env, temp_tanka_env):
@@ -108,9 +113,12 @@ def mock_secret_state(mocker, tk_status_file, mock_tk_env, temp_tanka_env):
     mock_secret_state.kube_secrets.return_value = "[]"
 
     # Patch the factory used by most code paths to create SecretState from a path
-    mocker.patch("tkseal.secret_state.SecretState.from_path", return_value=mock_secret_state)
+    mocker.patch(
+        "tkseal.secret_state.SecretState.from_path", return_value=mock_secret_state
+    )
 
     return mock_secret_state
+
 
 @pytest.fixture
 def load_secret_file():
@@ -119,6 +127,7 @@ def load_secret_file():
         test_secrets_yaml = f.read()
         test_secrets_dict = yaml.safe_load(test_secrets_yaml)
     return test_secrets_yaml, test_secrets_dict
+
 
 @pytest.fixture
 def sample_plain_secrets():
@@ -132,6 +141,7 @@ def sample_plain_secrets():
         ],
         indent=2,
     )
+
 
 @pytest.fixture
 def sample_kube_secrets():

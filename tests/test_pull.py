@@ -4,10 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from tkseal.diff import DiffResult
 from tkseal.exceptions import TKSealError
 from tkseal.pull import Pull
-from tkseal.secret_state import SecretState
+
 
 class TestPullInitialization:
     """Test Pull class initialization."""
@@ -17,6 +16,7 @@ class TestPullInitialization:
         pull = Pull(simple_mock_secret_state)
 
         assert pull.secret_state == simple_mock_secret_state
+
 
 class TestPullWrite:
     """Test Pull.write() method."""

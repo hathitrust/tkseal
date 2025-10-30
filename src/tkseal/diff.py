@@ -3,8 +3,8 @@
 import difflib
 from dataclasses import dataclass
 
-from tkseal.secret_state import SecretState
 from tkseal.configuration import PLAIN_SECRETS_FILE
+from tkseal.secret_state import SecretState
 
 
 @dataclass

@@ -38,7 +38,9 @@ class TKEnvironment:
             if not self._status_lines:
                 raise TKSealError(f"No status information found for path: {path}")
         except Exception as e:
-            raise TKSealError(f"Failed to initialize Tanka environment: {str(e)}")
+            raise TKSealError(
+                f"Failed to initialize Tanka environment: {str(e)}"
+            ) from e
 
     @staticmethod
     def status(path: str) -> str:
@@ -60,9 +62,9 @@ class TKEnvironment:
             )
             return result.stdout
         except subprocess.CalledProcessError as e:
-            raise TKSealError(f"tk status failed: {e.stderr}")
+            raise TKSealError(f"tk status failed: {e.stderr}") from e
         except Exception as e:
-            raise TKSealError(f"Failed to run tk status: {str(e)}")
+            raise TKSealError(f"Failed to run tk status: {str(e)}") from e
 
     @property
     def context(self) -> str:

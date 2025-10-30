@@ -10,16 +10,6 @@ from tkseal.seal import Seal
 from tkseal.secret_state import SecretState
 
 
-#@pytest.fixture
-#def mock_secret_state(mocker):
-#    """Mock SecretState with controlled behavior."""
-#    mock_state = mocker.Mock(spec=SecretState)
-#    mock_state.context = "test-context"
-#    mock_state.namespace = "test-namespace"
-#    mock_state.plain_secrets_file_path = Path("/fake/plain_secrets.json")
-#    mock_state.sealed_secrets_file_path = Path("/fake/sealed_secrets.json")
-#    return mock_state
-
 @pytest.fixture
 def sample_plain_secrets_multiple():
     """Sample plain_secrets.json with multiple secrets."""
@@ -85,7 +75,9 @@ class TestSealKubesealMethod:
 class TestSealRun:
     """Test Seal.run() method."""
 
-    def test_run_reads_plain_secrets(self, mocker, simple_mock_secret_state, sample_plain_secrets):
+    def test_run_reads_plain_secrets(
+        self, mocker, simple_mock_secret_state, sample_plain_secrets
+    ):
         """Test run() reads plain_secrets from secret_state."""
         # Mock plain_secrets() method
         simple_mock_secret_state.plain_secrets.return_value = sample_plain_secrets
@@ -94,8 +86,8 @@ class TestSealRun:
         mock_kubeseal = mocker.patch("tkseal.seal.KubeSeal.seal")
         mock_kubeseal.return_value = "sealed-value"
 
-        # Mock file write
-        mock_write = mocker.patch.object(Path, "write_text")
+        # Mock file write to prevent actual file operations
+        mocker.patch.object(Path, "write_text")
 
         seal = Seal(simple_mock_secret_state)
         seal.run()
@@ -177,7 +169,9 @@ class TestSealRun:
     ):
         """Test run() processes multiple secrets from plain_secrets.json."""
         # Setup
-        simple_mock_secret_state.plain_secrets.return_value = sample_plain_secrets_multiple
+        simple_mock_secret_state.plain_secrets.return_value = (
+            sample_plain_secrets_multiple
+        )
         sealed_file = tmp_path / "sealed_secrets.json"
         simple_mock_secret_state.sealed_secrets_file_path = sealed_file
 
@@ -231,8 +225,6 @@ class TestSealRun:
         self, mocker, simple_mock_secret_state, tmp_path
     ):
         """Test run() handles empty plain_secrets.json."""
-        # Setup
-        #simple_mock_secret_state.plain_secrets.return_value = "[]"
         sealed_file = tmp_path / "sealed_secrets.json"
         simple_mock_secret_state.sealed_secrets_file_path = sealed_file
 
@@ -243,7 +235,7 @@ class TestSealRun:
         seal = Seal(simple_mock_secret_state)
         seal.run()
 
-        # Verify file was written with empty array
+        # Verify the file was written with an empty array
         sealed_secrets = json.loads(sealed_file.read_text())
         assert sealed_secrets == []
 
@@ -254,7 +246,9 @@ class TestSealRun:
 class TestSealErrorHandling:
     """Test Seal error handling."""
 
-    def test_run_propagates_kubeseal_error(self, mocker, simple_mock_secret_state, sample_plain_secrets):
+    def test_run_propagates_kubeseal_error(
+        self, mocker, simple_mock_secret_state, sample_plain_secrets
+    ):
         """Test run() propagates TKSealError from KubeSeal.seal()."""
         # Setup
         simple_mock_secret_state.plain_secrets.return_value = sample_plain_secrets

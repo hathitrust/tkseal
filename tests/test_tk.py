@@ -95,7 +95,6 @@ class TestTKEnvironment:
         assert tk_environment._get_val("Context") == "some-context"
         assert tk_environment._get_val("Namespace") == "some-namespace"
 
-
     def test_get_val_missing_key(self, mocker, tk_status_file):
         """Test _get_val returns None for missing keys"""
 

@@ -187,5 +187,14 @@ The flow is:
 2. Read plain_secrets.json
 3. Seal each secret using kubeseal
 4. Write sealed secrets to sealed_secrets.json
+ 
+# Seal secrets (with confirmation)
+`tkseal seal /path/to/tanka/environment`
+
+The command will:
+1. Show yellow warning about cluster changes
+2. Display diff of what would change
+3. Ask for confirmation
+4. Seal secrets to sealed_secrets.json
 
 

@@ -51,6 +51,6 @@ class KubeSeal:
         except subprocess.CalledProcessError as e:
             raise TKSealError(
                 f"Command failed with exit code {e.returncode}: {e.stderr}"
-            )
+            ) from e
         except Exception as e:
-            raise TKSealError(f"Failed to execute command: {str(e)}")
+            raise TKSealError(f"Failed to execute command: {str(e)}") from e

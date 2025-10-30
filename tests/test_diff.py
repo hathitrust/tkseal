@@ -1,4 +1,3 @@
-
 """Tests for Diff class."""
 
 import json
@@ -6,6 +5,7 @@ import json
 import pytest
 
 from tkseal.diff import Diff, DiffResult
+
 
 @pytest.fixture
 def sample_plain_secrets_with_addition():
@@ -16,9 +16,7 @@ def sample_plain_secrets_with_addition():
                 "name": "app-secret",
                 "data": {"username": "admin", "password": "secret123"},
             },
-            {   "name": "db-secret",
-                "data": {"host": "localhost", "port": "5432"}
-            },
+            {"name": "db-secret", "data": {"host": "localhost", "port": "5432"}},
         ],
         indent=2,
     )
@@ -42,6 +40,7 @@ def sample_plain_secrets_modified():
         ],
         indent=2,
     )
+
 
 class TestDiffNoChanges:
     """Test Diff when there are no differences."""
@@ -115,10 +114,15 @@ class TestDiffModifications:
     """Test Diff when secrets are modified."""
 
     def test_plain_shows_modification(
-        self, simple_mock_secret_state, sample_plain_secrets_modified, sample_kube_secrets
+        self,
+        simple_mock_secret_state,
+        sample_plain_secrets_modified,
+        sample_kube_secrets,
     ):
         """Test plain mode shows modifications when secret values change."""
-        simple_mock_secret_state.plain_secrets.return_value = sample_plain_secrets_modified
+        simple_mock_secret_state.plain_secrets.return_value = (
+            sample_plain_secrets_modified
+        )
         simple_mock_secret_state.kube_secrets.return_value = sample_kube_secrets
 
         diff = Diff(simple_mock_secret_state)
@@ -163,7 +167,9 @@ class TestDiffPullMode:
 class TestDiffEmptySecrets:
     """Test Diff with empty secrets scenarios."""
 
-    def test_plain_empty_local_secrets(self, simple_mock_secret_state, sample_kube_secrets):
+    def test_plain_empty_local_secrets(
+        self, simple_mock_secret_state, sample_kube_secrets
+    ):
         """Test plain mode when local secrets file is empty."""
         simple_mock_secret_state.plain_secrets.return_value = ""
         simple_mock_secret_state.kube_secrets.return_value = sample_kube_secrets
@@ -176,7 +182,9 @@ class TestDiffEmptySecrets:
         # Empty local means cluster secrets would be removed
         assert "-" in result.diff_output
 
-    def test_plain_empty_cluster_secrets(self, simple_mock_secret_state, sample_plain_secrets):
+    def test_plain_empty_cluster_secrets(
+        self, simple_mock_secret_state, sample_plain_secrets
+    ):
         """Test plain mode when cluster has no secrets."""
         simple_mock_secret_state.plain_secrets.return_value = sample_plain_secrets
         simple_mock_secret_state.kube_secrets.return_value = ""
