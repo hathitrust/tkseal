@@ -32,7 +32,7 @@ echo minikube kubectl apply -- -f https://github.com/bitnami-labs/sealed-secrets
 echo ⚙️  setting up tanka environment
 mkdir sealedsecret-test
 cd sealedsecret-test
-tk init --k8s 1.33
+tk init --k8s 1.33 -f
 
 apiserver=$(minikube kubectl -- cluster-info | grep 'Kubernetes control plane is running at' | awk '{print $NF}')
 tk env set environments/default --server=$apiserver
