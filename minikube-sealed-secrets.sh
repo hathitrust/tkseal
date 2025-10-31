@@ -25,7 +25,10 @@ fi
 
 echo 🔒 installing sealed secrets
 
-echo minikube kubectl apply -- -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.32.2/controller.yaml
+minikube kubectl apply -- -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.32.2/controller.yaml
+
+kubectl -n kube-system wait --for=condition=ready pod -l name=sealed-secrets-controller
+kubectl -n kube-system logs deployment/sealed-secrets-controller
 
 ####### outline of integration tests
 
