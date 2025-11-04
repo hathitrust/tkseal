@@ -23,7 +23,7 @@ class Diff:
         self.secret_state = secret_state
 
     def plain(self) -> DiffResult:
-        """Compare showing what would change in cluster (push mode)."""
+        """Compare showing what would change in the cluster (push mode)."""
         kube_secrets = self.secret_state.kube_secrets()
         plain_secrets = self.secret_state.plain_secrets()
 
@@ -35,7 +35,9 @@ class Diff:
         )
 
     def pull(self) -> DiffResult:
-        """Compare showing what pulling would change locally (pull mode)."""
+        """Compare showing what pulling would change locally (pull mode).
+        This function is only used for displaying diffs when pulling secrets
+        """
         plain_secrets = self.secret_state.plain_secrets()
         kube_secrets = self.secret_state.kube_secrets()
 

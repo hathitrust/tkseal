@@ -2,6 +2,7 @@ import shutil
 import subprocess
 
 from tkseal.exceptions import TKSealError
+from tkseal.tkseal_utils import run_command
 
 
 class KubeSeal:
@@ -25,12 +26,9 @@ class KubeSeal:
         Returns:
             str: Sealed (encrypted) value
 
-        Raises:
-            TKSealError: If kubeseal command fails
         """
-        try:
-            # Construct kubeseal command
-            cmd = [
+        # Construct kubeseal command
+        cmd = [
                 "kubeseal",
                 "--raw",
                 "--namespace",
@@ -39,18 +37,9 @@ class KubeSeal:
                 name,
                 "--context",
                 context,
-            ]
+        ]
 
-            # Execute kubeseal command with value piped via stdin
-            result = subprocess.run(
-                cmd, input=value, capture_output=True, text=True, check=True
-            )
+        # Execute kubeseal command with value piped via stdin
+        result = run_command(cmd, value=value)
 
-            return result.stdout
-
-        except subprocess.CalledProcessError as e:
-            raise TKSealError(
-                f"Command failed with exit code {e.returncode}: {e.stderr}"
-            ) from e
-        except Exception as e:
-            raise TKSealError(f"Failed to execute command: {str(e)}") from e
+        return result

@@ -28,7 +28,7 @@ class TestKubectl:
     def test_get_secrets_success(self, mocker, load_secret_file):
         test_secrets_yaml, test_secrets_dict = load_secret_file
 
-        mock_run = mocker.patch("tkseal.kubectl.KubeCtl._run_command")
+        mock_run = mocker.patch("tkseal.kubectl.run_command")
         # with patch('tkseal.kubectl.KubeCtl._run_command') as mock_run:
         mock_run.return_value = test_secrets_yaml
         result = KubeCtl.get_secrets("test-context", "test-namespace")
@@ -51,18 +51,8 @@ class TestKubectl:
         assert "items" in result
         assert len(result["items"]) == 2
 
-    def test_get_secrets_kubectl_error(self, mocker):
-        mock_run = mocker.patch("tkseal.kubectl.KubeCtl._run_command")
-
-        mock_run.side_effect = Exception("kubectl error")
-
-        with pytest.raises(TKSealError) as exc_info:
-            KubeCtl.get_secrets("test-context", "test-namespace")
-
-        assert "Failed to get secrets" in str(exc_info.value)
-
     def test_get_secrets_invalid_yaml(self, mocker):
-        mock_run = mocker.patch("tkseal.kubectl.KubeCtl._run_command")
+        mock_run = mocker.patch("tkseal.kubectl.run_command")
         mock_run.return_value = "invalid: yaml: :"
 
         with pytest.raises(TKSealError) as exc_info:

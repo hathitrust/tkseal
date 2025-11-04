@@ -29,7 +29,6 @@ class TKEnvironment:
             TKSealError: If path is invalid or tk status fails
         """
         # Normalize path by removing trailing slash and .jsonnet extension
-        # self._path = re.sub(r'(\.jsonnet)?/?$', '', path)
         self._path = os.path.normpath(path).removesuffix(".jsonnet")
 
         try:

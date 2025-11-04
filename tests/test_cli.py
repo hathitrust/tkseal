@@ -31,6 +31,7 @@ class TestReadyCommand:
         mock_kubeseal.return_value = True
 
         result = cli_runner.invoke(cli, ["ready"])
+
         assert result.exit_code == 0
         assert (
             "✅ Kubectl is installed" in result.output

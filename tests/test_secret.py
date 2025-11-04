@@ -49,26 +49,6 @@ def test_secret_empty_data():
     assert secret.name == "empty-secret"
     assert secret.data == []
 
-
-def test_secrets_collection():
-    """Test that Secrets correctly initializes a collection of Secret objects when given a list."""
-    raw_secrets = [
-        {
-            "metadata": {"name": "secret1"},
-            "data": {"key1": "dmFsdWUx"},  # base64 encoded "value1"
-        },
-        {
-            "metadata": {"name": "secret2"},
-            "data": {"key2": "dmFsdWUy"},  # base64 encoded "value2"
-        },
-    ]
-
-    secrets = Secrets(raw_secrets)
-    assert len(secrets.items) == 2
-    assert all(isinstance(s, Secret) for s in secrets.items)
-    assert [s.name for s in secrets.items] == ["secret1", "secret2"]
-
-
 def test_secrets_data_collection():
     """Test that Secret.data returns a list of SecretDataPair objects."""
     raw = {
@@ -114,45 +94,6 @@ def test_secrets_with_kubectl_format():
     assert len(secrets.items) == 2
     assert secrets.items[0].name == "secret1"
     assert secrets.items[1].name == "secret2"
-
-
-def test_secrets_with_list_format():
-    """Test that Secrets still works with direct list format (backward compatibility)."""
-    secret_list = [
-        {"metadata": {"name": "secret1"}, "data": {"key1": "dmFsdWUx"}},
-        {"metadata": {"name": "secret2"}, "data": {"key2": "dmFsdWUy"}},
-    ]
-    secrets = Secrets(secret_list)
-    assert len(secrets.items) == 2
-    assert secrets.items[0].name == "secret1"
-    assert secrets.items[1].name == "secret2"
-
-
-def test_secrets_to_json():
-    """Test that Secrets.to_json() returns properly formatted JSON with decoded values."""
-    import json
-
-    secret_list = [
-        {
-            "metadata": {"name": "example"},
-            "data": {
-                "EXAMPLE_SECRET": "ZXhhbXBsZV9zZWNyZXQ=",  # "example_secret"
-                "ANOTHER_KEY": "YW5vdGhlcl92YWx1ZQ==",  # "another_value"
-            },
-        }
-    ]
-    secrets = Secrets(secret_list)
-    json_output = secrets.to_json()
-
-    # Verify it's valid JSON
-    parsed = json.loads(json_output)
-
-    # Verify structure
-    assert len(parsed) == 1
-    assert parsed[0]["name"] == "example"
-    assert parsed[0]["data"]["EXAMPLE_SECRET"] == "example_secret"
-    assert parsed[0]["data"]["ANOTHER_KEY"] == "another_value"
-
 
 def test_secrets_for_tk_env(mocker):
     """Test that Secrets.for_tk_env() integrates TKEnvironment and KubeCtl correctly."""

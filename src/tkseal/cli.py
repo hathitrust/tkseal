@@ -60,7 +60,7 @@ def diff(path: str) -> None:
         # Create SecretState from path
         secret_state = SecretState.from_path(path)
 
-        # Create Diff instance and run comparison
+        # Create a Diff instance and run comparison
         diff_obj = Diff(secret_state)
         result = diff_obj.plain()
 
