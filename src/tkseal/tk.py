@@ -1,9 +1,10 @@
 import os
 import re
 import shutil
-import subprocess
+
 
 from tkseal.exceptions import TKSealError
+from tkseal.tkseal_utils import run_command
 
 
 class TK:
@@ -52,19 +53,10 @@ class TKEnvironment:
         Returns:
             str: Output from tk status command
 
-        Raises:
-            TKSealError: If tk command fails
         """
-        try:
-            result = subprocess.run(
-                ["tk", "status", path], capture_output=True, text=True, check=True
-            )
-            return result.stdout
-        except subprocess.CalledProcessError as e:
-            raise TKSealError(f"tk status failed: {e.stderr}") from e
-        except Exception as e:
-            raise TKSealError(f"Failed to run tk status: {str(e)}") from e
-
+        cmd = ["tk", "status", path]
+        result = run_command(cmd)
+        return result
     @property
     def context(self) -> str:
         """Extract Kubernetes context from tk status output"""

@@ -1,5 +1,3 @@
-import subprocess
-
 import pytest
 
 from tkseal.exceptions import TKSealError
@@ -75,15 +73,13 @@ class TestTKEnvironment:
     def test_tk_environment_command_failure(self, mocker):
         """Test error handling for tk command failure"""
 
-        mock_run = mocker.patch("subprocess.run")
+        mock_run = mocker.patch("tkseal.tk.run_command")
 
-        mock_run.side_effect = subprocess.CalledProcessError(
-            1, ["tk"], stderr="Command failed"
-        )
+        mock_run.side_effect = TKSealError("Command failed with exit code 1: tk error")
 
         with pytest.raises(TKSealError) as exc_info:
             TKEnvironment("/path/to/env")
-        assert "tk status failed" in str(exc_info.value)
+        assert "Command failed" in str(exc_info.value)
 
     def test_get_val_with_spaces(self, mocker, tk_status_file):
         """Test _get_val handles values with spaces correctly"""

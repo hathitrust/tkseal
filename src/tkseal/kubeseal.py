@@ -1,7 +1,5 @@
 import shutil
-import subprocess
 
-from tkseal.exceptions import TKSealError
 from tkseal.tkseal_utils import run_command
 
 
