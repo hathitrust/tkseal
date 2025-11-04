@@ -1,4 +1,3 @@
-
 """Tests for Diff class."""
 
 import json
@@ -6,35 +5,6 @@ import json
 import pytest
 
 from tkseal.diff import Diff, DiffResult
-from tkseal.secret_state import SecretState
-
-
-@pytest.fixture
-def sample_plain_secrets():
-    """Sample plain_secrets.json content."""
-    return json.dumps(
-        [
-            {
-                "name": "app-secret",
-                "data": {"username": "admin", "password": "secret123"},
-            }
-        ],
-        indent=2,
-    )
-
-
-@pytest.fixture
-def sample_kube_secrets():
-    """Sample kube secrets JSON content."""
-    return json.dumps(
-        [
-            {
-                "name": "app-secret",
-                "data": {"username": "admin", "password": "secret123"},
-            }
-        ],
-        indent=2,
-    )
 
 
 @pytest.fixture
@@ -72,39 +42,19 @@ def sample_plain_secrets_modified():
     )
 
 
-@pytest.fixture
-def mock_secret_state(mocker):
-    """Create mock SecretState with controlled plain/kube secrets."""
-    mock_state = mocker.Mock(spec=SecretState)
-    return mock_state
-
-
 class TestDiffNoChanges:
     """Test Diff when there are no differences."""
 
-    def test_plain_no_differences(
-        self, mock_secret_state, sample_plain_secrets, sample_kube_secrets
+    @pytest.mark.parametrize("mode", ["plain", "pull"])
+    def test_plain_pull_no_differences(
+        self, mode, simple_mock_secret_state, sample_plain_secrets
     ):
         """Test plain mode when local and cluster secrets are identical."""
-        mock_secret_state.plain_secrets.return_value = sample_plain_secrets
-        mock_secret_state.kube_secrets.return_value = sample_kube_secrets
+        simple_mock_secret_state.plain_secrets.return_value = sample_plain_secrets
+        simple_mock_secret_state.kube_secrets.return_value = sample_plain_secrets
 
-        diff = Diff(mock_secret_state)
-        result = diff.plain()
-
-        assert isinstance(result, DiffResult)
-        assert result.has_differences is False
-        assert result.diff_output == ""
-
-    def test_pull_no_differences(
-        self, mock_secret_state, sample_plain_secrets, sample_kube_secrets
-    ):
-        """Test pull mode when local and cluster secrets are identical."""
-        mock_secret_state.plain_secrets.return_value = sample_plain_secrets
-        mock_secret_state.kube_secrets.return_value = sample_kube_secrets
-
-        diff = Diff(mock_secret_state)
-        result = diff.pull()
+        diff = Diff(simple_mock_secret_state)
+        result = diff.plain() if mode == "plain" else diff.pull()
 
         assert isinstance(result, DiffResult)
         assert result.has_differences is False
@@ -116,17 +66,17 @@ class TestDiffAdditions:
 
     def test_plain_shows_addition(
         self,
-        mock_secret_state,
+        simple_mock_secret_state,
         sample_plain_secrets_with_addition,
         sample_kube_secrets,
     ):
         """Test plain mode shows additions when local has new secrets."""
-        mock_secret_state.plain_secrets.return_value = (
+        simple_mock_secret_state.plain_secrets.return_value = (
             sample_plain_secrets_with_addition
         )
-        mock_secret_state.kube_secrets.return_value = sample_kube_secrets
+        simple_mock_secret_state.kube_secrets.return_value = sample_kube_secrets
 
-        diff = Diff(mock_secret_state)
+        diff = Diff(simple_mock_secret_state)
         result = diff.plain()
 
         assert isinstance(result, DiffResult)
@@ -141,17 +91,17 @@ class TestDiffRemovals:
 
     def test_plain_shows_removal(
         self,
-        mock_secret_state,
+        simple_mock_secret_state,
         sample_plain_secrets_with_removal,
         sample_kube_secrets,
     ):
         """Test plain mode shows removals when local is missing secrets."""
-        mock_secret_state.plain_secrets.return_value = (
+        simple_mock_secret_state.plain_secrets.return_value = (
             sample_plain_secrets_with_removal
         )
-        mock_secret_state.kube_secrets.return_value = sample_kube_secrets
+        simple_mock_secret_state.kube_secrets.return_value = sample_kube_secrets
 
-        diff = Diff(mock_secret_state)
+        diff = Diff(simple_mock_secret_state)
         result = diff.plain()
 
         assert isinstance(result, DiffResult)
@@ -164,20 +114,25 @@ class TestDiffModifications:
     """Test Diff when secrets are modified."""
 
     def test_plain_shows_modification(
-        self, mock_secret_state, sample_plain_secrets_modified, sample_kube_secrets
+        self,
+        simple_mock_secret_state,
+        sample_plain_secrets_modified,
+        sample_kube_secrets,
     ):
         """Test plain mode shows modifications when secret values change."""
-        mock_secret_state.plain_secrets.return_value = sample_plain_secrets_modified
-        mock_secret_state.kube_secrets.return_value = sample_kube_secrets
+        simple_mock_secret_state.plain_secrets.return_value = (
+            sample_plain_secrets_modified
+        )
+        simple_mock_secret_state.kube_secrets.return_value = sample_kube_secrets
 
-        diff = Diff(mock_secret_state)
+        diff = Diff(simple_mock_secret_state)
         result = diff.plain()
 
         assert isinstance(result, DiffResult)
         assert result.has_differences is True
         # Should show old value being removed
         assert "-" in result.diff_output
-        assert "secret123" in result.diff_output
+        assert "newsecret456" in result.diff_output
         # Should show new value being added
         assert "+" in result.diff_output
         assert "newpassword456" in result.diff_output
@@ -188,18 +143,18 @@ class TestDiffPullMode:
 
     def test_pull_shows_cluster_changes(
         self,
-        mock_secret_state,
+        simple_mock_secret_state,
         sample_plain_secrets_with_removal,
         sample_kube_secrets,
     ):
         """Test pull mode shows what would change locally if pulled."""
         # Local is empty, cluster has secrets
-        mock_secret_state.plain_secrets.return_value = (
+        simple_mock_secret_state.plain_secrets.return_value = (
             sample_plain_secrets_with_removal
         )
-        mock_secret_state.kube_secrets.return_value = sample_kube_secrets
+        simple_mock_secret_state.kube_secrets.return_value = sample_kube_secrets
 
-        diff = Diff(mock_secret_state)
+        diff = Diff(simple_mock_secret_state)
         result = diff.pull()
 
         assert isinstance(result, DiffResult)
@@ -212,12 +167,14 @@ class TestDiffPullMode:
 class TestDiffEmptySecrets:
     """Test Diff with empty secrets scenarios."""
 
-    def test_plain_empty_local_secrets(self, mock_secret_state, sample_kube_secrets):
+    def test_plain_empty_local_secrets(
+        self, simple_mock_secret_state, sample_kube_secrets
+    ):
         """Test plain mode when local secrets file is empty."""
-        mock_secret_state.plain_secrets.return_value = ""
-        mock_secret_state.kube_secrets.return_value = sample_kube_secrets
+        simple_mock_secret_state.plain_secrets.return_value = ""
+        simple_mock_secret_state.kube_secrets.return_value = sample_kube_secrets
 
-        diff = Diff(mock_secret_state)
+        diff = Diff(simple_mock_secret_state)
         result = diff.plain()
 
         assert isinstance(result, DiffResult)
@@ -225,12 +182,14 @@ class TestDiffEmptySecrets:
         # Empty local means cluster secrets would be removed
         assert "-" in result.diff_output
 
-    def test_plain_empty_cluster_secrets(self, mock_secret_state, sample_plain_secrets):
+    def test_plain_empty_cluster_secrets(
+        self, simple_mock_secret_state, sample_plain_secrets
+    ):
         """Test plain mode when cluster has no secrets."""
-        mock_secret_state.plain_secrets.return_value = sample_plain_secrets
-        mock_secret_state.kube_secrets.return_value = ""
+        simple_mock_secret_state.plain_secrets.return_value = sample_plain_secrets
+        simple_mock_secret_state.kube_secrets.return_value = ""
 
-        diff = Diff(mock_secret_state)
+        diff = Diff(simple_mock_secret_state)
         result = diff.plain()
 
         assert isinstance(result, DiffResult)
@@ -238,12 +197,12 @@ class TestDiffEmptySecrets:
         # Local secrets would be added to cluster
         assert "+" in result.diff_output
 
-    def test_plain_both_empty(self, mock_secret_state):
+    def test_plain_both_empty(self, simple_mock_secret_state):
         """Test plain mode when both local and cluster are empty."""
-        mock_secret_state.plain_secrets.return_value = ""
-        mock_secret_state.kube_secrets.return_value = ""
+        simple_mock_secret_state.plain_secrets.return_value = ""
+        simple_mock_secret_state.kube_secrets.return_value = ""
 
-        diff = Diff(mock_secret_state)
+        diff = Diff(simple_mock_secret_state)
         result = diff.plain()
 
         assert isinstance(result, DiffResult)
@@ -254,7 +213,7 @@ class TestDiffEmptySecrets:
 class TestDiffMultipleSecrets:
     """Test Diff with multiple secrets and partial changes."""
 
-    def test_multiple_secrets_partial_changes(self, mock_secret_state):
+    def test_multiple_secrets_partial_changes(self, simple_mock_secret_state):
         """Test diff with multiple secrets where only some have changed."""
         plain_secrets = json.dumps(
             [
@@ -292,10 +251,10 @@ class TestDiffMultipleSecrets:
             indent=2,
         )
 
-        mock_secret_state.plain_secrets.return_value = plain_secrets
-        mock_secret_state.kube_secrets.return_value = kube_secrets
+        simple_mock_secret_state.plain_secrets.return_value = plain_secrets
+        simple_mock_secret_state.kube_secrets.return_value = kube_secrets
 
-        diff = Diff(mock_secret_state)
+        diff = Diff(simple_mock_secret_state)
         result = diff.plain()
 
         assert isinstance(result, DiffResult)
@@ -310,16 +269,16 @@ class TestDiffMultipleSecrets:
 class TestDiffWhitespaceHandling:
     """Test Diff handles whitespace and trailing newlines properly."""
 
-    def test_trailing_newlines(self, mock_secret_state, sample_plain_secrets):
+    def test_trailing_newlines(self, simple_mock_secret_state, sample_plain_secrets):
         """Test diff handles trailing newlines consistently."""
         # Add trailing newlines to one but not the other
         plain_with_newlines = sample_plain_secrets + "\n\n"
         kube_with_newlines = sample_plain_secrets + "\n"
 
-        mock_secret_state.plain_secrets.return_value = plain_with_newlines
-        mock_secret_state.kube_secrets.return_value = kube_with_newlines
+        simple_mock_secret_state.plain_secrets.return_value = plain_with_newlines
+        simple_mock_secret_state.kube_secrets.return_value = kube_with_newlines
 
-        diff = Diff(mock_secret_state)
+        diff = Diff(simple_mock_secret_state)
         result = diff.plain()
 
         # Different trailing newlines might show as a difference

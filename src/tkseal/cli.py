@@ -8,6 +8,7 @@ from tkseal import __version__
 from tkseal.diff import Diff
 from tkseal.exceptions import TKSealError
 from tkseal.pull import Pull
+from tkseal.seal import Seal
 from tkseal.secret_state import SecretState
 
 
@@ -59,7 +60,7 @@ def diff(path: str) -> None:
         # Create SecretState from path
         secret_state = SecretState.from_path(path)
 
-        # Create Diff instance and run comparison
+        # Create a Diff instance and run comparison
         diff_obj = Diff(secret_state)
         result = diff_obj.plain()
 
@@ -106,6 +107,47 @@ def pull(path: str) -> None:
             if click.confirm("Are you sure?"):
                 pull_obj.write()
                 click.echo("Successfully pulled secrets to plain_secrets.json")
+        else:
+            click.echo("No differences")
+
+    except TKSealError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument("path", type=click.Path(exists=True))
+def seal(path: str) -> None:
+    """Seal plain_secrets.json to sealed_secrets.json.
+
+    PATH: Path to Tanka environment directory or .jsonnet file
+
+    Takes secrets from plain_secrets.json, encrypts them using kubeseal,
+    and saves the resulting SealedSecret resources to sealed_secrets.json.
+    """
+    try:
+        # Create SecretState from path
+        secret_state = SecretState.from_path(path)
+
+        # Show informational message
+        click.secho(
+            'This shows what would change in the cluster based on "plain_secrets.json"',
+            fg="yellow",
+        )
+
+        # Show diff to preview changes
+        diff_obj = Diff(secret_state)
+        result = diff_obj.plain()
+
+        # Display diff results
+        if result.has_differences:
+            click.echo(result.diff_output)
+
+            # Confirm before sealing
+            if click.confirm("Are you sure?"):
+                seal_obj = Seal(secret_state)
+                seal_obj.run()
+                click.echo("Successfully sealed secrets to sealed_secrets.json")
         else:
             click.echo("No differences")
 

@@ -25,14 +25,17 @@ fi
 
 echo 🔒 installing sealed secrets
 
-echo minikube kubectl apply -- -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.32.2/controller.yaml
+minikube kubectl apply -- -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.32.2/controller.yaml
+
+kubectl -n kube-system wait --for=condition=ready pod -l name=sealed-secrets-controller
+kubectl -n kube-system logs deployment/sealed-secrets-controller
 
 ####### outline of integration tests
 
 echo ⚙️  setting up tanka environment
 mkdir sealedsecret-test
 cd sealedsecret-test
-tk init --k8s 1.33
+tk init --k8s 1.33 -f
 
 apiserver=$(minikube kubectl -- cluster-info | grep 'Kubernetes control plane is running at' | awk '{print $NF}')
 tk env set environments/default --server=$apiserver

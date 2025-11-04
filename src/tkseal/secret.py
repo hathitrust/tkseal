@@ -3,6 +3,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, cast
 
+from tkseal import TKSealError
 from tkseal.kubectl import KubeCtl
 from tkseal.tk import TKEnvironment
 
@@ -37,18 +38,22 @@ class Secret:
 
 
 class Secrets:
-    def __init__(self, raw_secrets: list[dict[str, Any]] | dict[str, Any]):
-        """Initialize Secrets from either a list or kubectl output format.
+    def __init__(self, raw_secrets: dict[str, Any]):
+        """Initialize Secrets from YAML-parsed kubectl output format.
         Args:
-            raw_secrets: Either a list of secret dicts, or a kubectl output dict with 'items' key
+            raw_secrets: kubectl output dict with 'items' key
+        Raises:
+            TKSealError: If raw_secrets does not have the items key
         """
-        # Handle kubectl format with "items" key
-        if isinstance(raw_secrets, dict) and "items" in raw_secrets:
-            secret_list = raw_secrets["items"]
-        else:
-            secret_list = raw_secrets
 
-        self.items = [Secret(raw) for raw in secret_list]
+        # Handle kubectl format with the "items" key
+        if "items" not in raw_secrets:
+            raise TKSealError(
+                "Invalid kubectl output: expected dict with 'items' key. "
+                f"Got keys: {list(raw_secrets.keys())}"
+            )
+
+        self.items = [Secret(raw) for raw in raw_secrets["items"]]
 
     @classmethod
     def for_tk_env(cls, path: str) -> "Secrets":

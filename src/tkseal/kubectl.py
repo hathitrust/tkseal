@@ -1,9 +1,8 @@
 import shutil
-import subprocess
-
 import yaml
 
 from tkseal.exceptions import TKSealError
+from tkseal.tkseal_utils import run_command
 
 
 class KubeCtl:
@@ -11,31 +10,10 @@ class KubeCtl:
 
     @staticmethod
     def exists() -> bool:
-        """Return True if the 'kubectl' executable is available on PATH."""
-        return shutil.which("kubectl") is not None
-
-    @staticmethod
-    def _run_command(cmd: list[str]) -> str:
-        """Execute a kubectl command and return its output.
-
-        Args:
-            cmd: Command to execute as a list of strings
-
-        Returns:
-            The command output as a string
-
-        Raises:
-            TKSealError: If the command fails to execute or returns non-zero
+        """Return True if the 'kubectl' executable is available on PATH.
+        Returns: bool
         """
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            return result.stdout
-        except subprocess.CalledProcessError as e:
-            raise TKSealError(
-                f"Command failed with exit code {e.returncode}: {e.stderr}"
-            )
-        except Exception as e:
-            raise TKSealError(f"Failed to execute command: {str(e)}")
+        return shutil.which("kubectl") is not None
 
     @staticmethod
     def get_secrets(context: str, namespace: str) -> dict:
@@ -52,29 +30,22 @@ class KubeCtl:
         Raises:
             TKSealError: If there's an error running kubectl or parsing the output
         """
+        # Construct kubectl command with proper context and namespace
+        cmd = [
+            "kubectl",
+            f"--context={context}",
+            f"--namespace={namespace}",
+            "get",
+            "secrets",
+            "-o",
+            "yaml",
+        ]
+
+        # Execute kubectl command and get output
+        output = run_command(cmd)
+
+        # Parse YAML output into Python dictionary
         try:
-            # Construct kubectl command with proper context and namespace
-            cmd = [
-                "kubectl",
-                f"--context={context}",
-                f"--namespace={namespace}",
-                "get",
-                "secrets",
-                "-o",
-                "yaml",
-            ]
-
-            # Execute kubectl command and get output
-            output = KubeCtl._run_command(cmd)
-
-            # Parse YAML output into Python dictionary
-            try:
-                return yaml.safe_load(output)
-            except yaml.YAMLError as e:
-                raise TKSealError(f"Failed to parse secrets YAML: {str(e)}")
-
-        except TKSealError:
-            # Re-raise TKSealError without wrapping
-            raise
-        except Exception as e:
-            raise TKSealError(f"Failed to get secrets: {str(e)}")
+            return yaml.safe_load(output)
+        except yaml.YAMLError as e:
+            raise TKSealError(f"Failed to parse secrets YAML: {str(e)}") from e
