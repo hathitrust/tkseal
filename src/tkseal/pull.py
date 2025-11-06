@@ -1,12 +1,13 @@
 from tkseal.diff import Diff, DiffResult
 from tkseal.secret_state import SecretState
+from tkseal.serializers import deserialize_secrets, serialize_secrets
 
 
 class Pull:
     """Handles pulling secrets from Kubernetes cluster to local files.
 
     This class coordinates the process of retrieving secrets from a Kubernetes
-    cluster and saving them to the local plain_secrets.json file.
+    cluster and saving them to the local plain_secrets.json or plain_secrets.yaml file.
     """
 
     def __init__(self, secret_state: SecretState):
@@ -20,8 +21,8 @@ class Pull:
     def run(self) -> DiffResult:
         """Show differences between local and cluster secrets.
 
-        This method displays what would change in the local plain_secrets.json
-        file if secrets were pulled from the cluster.
+        This method displays what would change in the local plain_secrets file
+        if secrets were pulled from the cluster.
 
         Returns:
             DiffResult: Result containing information about the difference
@@ -33,15 +34,26 @@ class Pull:
         return diff.pull()
 
     def write(self) -> None:
-        """Write cluster secrets to the plain_secrets.json file.
+        """Write cluster secrets to the plain_secrets file in the specified format.
 
-        This method retrieves secrets from the Kubernetes cluster and writes
-        them to the local plain_secrets.json file, overwriting any existing content.
+        This method retrieves secrets from the Kubernetes cluster (as JSON) and writes
+        them to the local plain_secrets file, converting to YAML if needed.
 
         Raises:
             TKSealError: If there's an error retrieving secrets from cluster
             PermissionError: If there's an error writing to the file
             OSError: If there's an I/O error writing to the file
         """
-        kube_secrets = self.secret_state.kube_secrets()
-        self.secret_state.plain_secrets_file_path.write_text(kube_secrets)
+        # Get secrets from cluster as JSON string
+        kube_secrets_json = self.secret_state.kube_secrets()
+
+        # Convert to desired format if needed
+        if self.secret_state.format == "yaml":
+            # Deserialize JSON and re-serialize to YAML
+            secrets_data = deserialize_secrets(kube_secrets_json, "json")
+            output = serialize_secrets(secrets_data, "yaml")
+        else:
+            # Keep as JSON (no conversion needed)
+            output = kube_secrets_json
+
+        self.secret_state.plain_secrets_file_path.write_text(output)

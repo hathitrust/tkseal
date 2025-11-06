@@ -6,16 +6,17 @@ from tkseal import TKSealError
 from tkseal.configuration import PLAIN_SECRETS_FILE
 from tkseal.kubeseal import KubeSeal
 from tkseal.secret_state import SecretState
+from tkseal.serializers import deserialize_secrets, serialize_secrets
 
 
 class Seal:
     """Handles sealing of plain secrets using kubeseal.
 
-    This class converts plain_secrets.json to sealed_secrets.json by:
-    1. Reading plain secrets from the environment
+    This class converts plain_secrets files to sealed_secrets files by:
+    1. Reading plain secrets from the environment (JSON or YAML)
     2. Encrypting each secret value using kubeseal
     3. Creating SealedSecret resources in Kubernetes format
-    4. Writing sealed secrets to sealed_secrets.json
+    4. Writing sealed secrets in the specified format (JSON or YAML)
     """
 
     def __init__(self, secret_state: SecretState):
@@ -49,12 +50,11 @@ class Seal:
     def run(self) -> None:
         """Convert plain secrets to sealed secrets.
 
-        Reads plain_secrets.json, encrypts each secret value using kubeseal,
-        creates SealedSecret resources, and writes to sealed_secrets.json.
+        Reads plain_secrets file (JSON or YAML), encrypts each secret value using kubeseal,
+        creates SealedSecret resources, and writes to sealed_secrets file in the specified format.
 
         Raises:
             TKSealError: If sealing or file operations fail
-            json.JSONDecodeError: If plain_secrets.json is malformed
         """
         # Read and parse plain secrets
         plain_secrets_text = self.secret_state.plain_secrets()
@@ -62,13 +62,19 @@ class Seal:
         # Check if plain_secrets_text is empty or exists
         if not plain_secrets_text or plain_secrets_text.strip() == "":
             raise TKSealError(
-                f"No plain secrets found. Please create {PLAIN_SECRETS_FILE} "
+                f"No plain secrets found. Please create {PLAIN_SECRETS_FILE}.{self.secret_state.format} "
                 f"or run 'tkseal pull' first."
             )
+
+        # Deserialize from the file format (could be JSON or YAML)
         try:
-            plain_secrets = json.loads(plain_secrets_text)
-        except json.decoder.JSONDecodeError as e:
-            raise TKSealError(f"Invalid JSON in {PLAIN_SECRETS_FILE}: {str(e)}") from e
+            plain_secrets = deserialize_secrets(
+                plain_secrets_text, self.secret_state.format
+            )
+        except (json.JSONDecodeError, Exception) as e:
+            raise TKSealError(
+                f"Invalid format in plain_secrets file: {str(e)}"
+            ) from e
 
         # Process each secret
         sealed_secrets = []
@@ -92,7 +98,7 @@ class Seal:
                             "name": secret["name"],
                             "namespace": self.secret_state.namespace,
                         },
-                        # Preserve secret type if specified in plain_secrets.json
+                        # Preserve the secret type if specified in the plain_secrets file
                         **({"type": secret["type"]} if "type" in secret else {}),
                     },
                     "encryptedData": encrypted_data,
@@ -100,6 +106,6 @@ class Seal:
             }
             sealed_secrets.append(sealed_secret)
 
-        # Write sealed secrets to file
-        sealed_json = json.dumps(sealed_secrets, indent=2)
-        self.secret_state.sealed_secrets_file_path.write_text(sealed_json)
+        # Serialize and write sealed secrets to file in the specified format
+        sealed_output = serialize_secrets(sealed_secrets, self.secret_state.format)
+        self.secret_state.sealed_secrets_file_path.write_text(sealed_output)

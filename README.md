@@ -175,6 +175,7 @@ Usage Example
 **Show what would change in cluster**
 
 ```tkseal diff /path/to/tanka/environments/production```
+Use `tkseal diff /path/to/env --format yaml` to output plain secrets in YAML format.
 
 **If there are differences, shows a unified diff**
 
@@ -215,6 +216,9 @@ The flow is:
 3. Prompt user for confirmation
 4. Write kube secrets to plain_secrets.json  
 
+# pull secrets (with confirmation)
+`tkseal pull /path/to/tanka/environment`
+Use `tkseal pull /path/to/env --format yaml` to output plain secrets in YAML format.
 
 ### seal command
 
@@ -234,6 +238,7 @@ The flow is:
  
 # Seal secrets (with confirmation)
 `tkseal seal /path/to/tanka/environment`
+Use `tkseal seal /path/to/env --format yaml` to output sealed secrets in YAML format.
 
 The command will:
 1. Show yellow warning about cluster changes

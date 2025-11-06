@@ -24,6 +24,8 @@ from tkseal.tk import TKEnvironment
 Notes:
   - All tests use tk_status.txt to ensure consistent context/namespace values.
   """
+
+
 @pytest.fixture
 def tk_status_file(tmp_path):
     """Copy the sample tests/tk_status.txt into a temporary file and return its path."""
@@ -34,7 +36,7 @@ def tk_status_file(tmp_path):
 
 
 @pytest.fixture
-def temp_tanka_env(tmp_path):
+def temp_tanka_env(tmp_path, format="json"):
     """Create a temporary Tanka environment directory structure."""
     env_path = tmp_path / "environments" / "test-env"
     env_path.mkdir(parents=True)
@@ -43,7 +45,7 @@ def temp_tanka_env(tmp_path):
     plain_secrets = [
         {"name": "test-secret", "data": {"username": "admin", "password": "secret123"}}
     ]
-    (env_path / "plain_secrets.json").write_text(json.dumps(plain_secrets, indent=2))
+    (env_path / f"plain_secrets.{format}").write_text(json.dumps(plain_secrets, indent=2))
 
     return env_path
 
@@ -84,6 +86,7 @@ def simple_mock_secret_state(mocker):
     mock_state.plain_secrets.return_value = "[]"
     mock_state.kube_secrets.return_value = "[]"
     mock_state.get_forbidden_secrets.return_value = []  # No forbidden secrets by default
+    mock_state.format = "json"  # Default format
     return mock_state
 
 
@@ -113,6 +116,7 @@ def mock_secret_state(mocker, tk_status_file, mock_tk_env, temp_tanka_env):
     mock_secret_state.plain_secrets.return_value = "[]"
     mock_secret_state.kube_secrets.return_value = "[]"
     mock_secret_state.get_forbidden_secrets.return_value = []  # No forbidden secrets by default
+    mock_secret_state.format = "json"  # Default format
 
     # Patch the factory used by most code paths to create SecretState from a path
     mocker.patch(
@@ -167,10 +171,12 @@ def sample_plain_secrets_multiple():
             {
                 "name": "app-secret",
                 "data": {"username": "admin", "password": "secret123"},
+                "type": "Opaque",
             },
             {
                 "name": "db-secret",
                 "data": {"db_host": "localhost", "db_password": "dbpass456"},
+                "type": "Opaque",
             },
         ],
         indent=2,

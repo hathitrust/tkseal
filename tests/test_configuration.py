@@ -11,12 +11,9 @@ def test_configuration_constant():
     - Ensure both file names end with .json extension.
     """
 
-    assert configuration.PLAIN_SECRETS_FILE == "plain_secrets.json"
+    assert configuration.PLAIN_SECRETS_FILE == "plain_secrets"
 
-    assert configuration.SEALED_SECRETS_FILE == "sealed_secrets.json"
+    assert configuration.SEALED_SECRETS_FILE == "sealed_secrets"
 
     assert isinstance(configuration.PLAIN_SECRETS_FILE, str)
     assert isinstance(configuration.SEALED_SECRETS_FILE, str)
-
-    assert configuration.PLAIN_SECRETS_FILE.endswith(".json")
-    assert configuration.SEALED_SECRETS_FILE.endswith(".json")

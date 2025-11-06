@@ -49,22 +49,28 @@ def ready() -> None:
 
 @cli.command()
 @click.argument("path", type=click.Path(exists=True))
-def diff(path: str) -> None:
-    """Show differences between plain_secrets.json and cluster secrets.
+@click.option(
+    "--format",
+    type=click.Choice(["json", "yaml"], case_sensitive=False),
+    default="json",
+    help="Output format for secret files (default: json)",
+)
+def diff(path: str, format: str) -> None:
+    """Show differences between plain_secrets file and cluster secrets.
 
     PATH: Path to Tanka environment directory or .jsonnet file
 
-    This shows what would change in the cluster based on plain_secrets.json
+    This shows what would change in the cluster based on plain_secrets file
     """
     try:
-        # Create SecretState from path
-        secret_state = SecretState.from_path(path)
+        # Create SecretState from path with specified format
+        secret_state = SecretState.from_path(path, format=format)
 
         # Create a Diff instance and run comparison
         diff_obj = Diff(secret_state)
         result = diff_obj.plain()
 
-        # Display results
+        # Display results - Always in JSON format, it is independent of the sealed_secrets format (YAML/JSON)
         if result.has_differences:
             click.echo(result.diff_output)
         else:
@@ -77,17 +83,23 @@ def diff(path: str) -> None:
 
 @cli.command()
 @click.argument("path", type=click.Path(exists=True))
-def pull(path: str) -> None:
-    """Pull secrets from the cluster to plain_secrets.json.
+@click.option(
+    "--format",
+    type=click.Choice(["json", "yaml"], case_sensitive=False),
+    default="json",
+    help="Output format for secret files (default: json)",
+)
+def pull(path: str, format: str) -> None:
+    """Pull secrets from the cluster to plain_secrets file.
 
     PATH: Path to Tanka environment directory or .jsonnet file
 
     This extracts unencrypted secrets from the Kubernetes cluster
-    and saves them to plain_secrets.json in the environment directory.
+    and saves them to plain_secrets.json or plain_secrets.yaml in the environment directory.
     """
     try:
-        # Create SecretState from path
-        secret_state = SecretState.from_path(path)
+        # Create SecretState from path with specified format
+        secret_state = SecretState.from_path(path, format=format)
 
         # Create Pull instance and show differences
         pull_obj = Pull(secret_state)
@@ -104,10 +116,16 @@ def pull(path: str) -> None:
                 click.secho(f"  - {secret.name} (type: {secret.type})", fg="yellow")
 
         # Show informational message
+        plain_secrets_file = f"plain_secrets.{format}"
         click.secho(
-            'This shows how "plain_secrets.json" would change based on what\'s in the Kubernetes cluster',
+            f'This shows how "{plain_secrets_file}" would change based on what\'s in the Kubernetes cluster',
             fg="yellow",
         )
+
+        # Create Pull instance and show differences
+        pull_obj = Pull(secret_state)
+        result = pull_obj.run()
+
         # Display diff results
         if result.has_differences:
             click.echo(result.diff_output)
@@ -115,7 +133,7 @@ def pull(path: str) -> None:
             # Confirm before writing
             if click.confirm("Are you sure?"):
                 pull_obj.write()
-                click.echo("Successfully pulled secrets to plain_secrets.json")
+                click.echo(f"Successfully pulled secrets to {plain_secrets_file}")
         else:
             click.echo("No differences")
 
@@ -126,21 +144,29 @@ def pull(path: str) -> None:
 
 @cli.command()
 @click.argument("path", type=click.Path(exists=True))
-def seal(path: str) -> None:
-    """Seal plain_secrets.json to sealed_secrets.json.
+@click.option(
+    "--format",
+    type=click.Choice(["json", "yaml"], case_sensitive=False),
+    default="json",
+    help="Output format for secret files (default: json)",
+)
+def seal(path: str, format: str) -> None:
+    """Seal plain_secrets file to sealed_secrets file.
 
     PATH: Path to Tanka environment directory or .jsonnet file
 
-    Takes secrets from plain_secrets.json, encrypts them using kubeseal,
-    and saves the resulting SealedSecret resources to sealed_secrets.json.
+    Takes secrets from plain_secrets file, encrypts them using kubeseal,
+    and saves the resulting SealedSecret resources to sealed_secrets file.
     """
     try:
-        # Create SecretState from path
-        secret_state = SecretState.from_path(path)
+        # Create SecretState from path with specified format
+        secret_state = SecretState.from_path(path, format=format)
+
+        sealed_secrets_file = f"sealed_secrets.{format}"
 
         # Show informational message
         # click.secho(
-        #    'This shows what would change in the cluster based on "plain_secrets.json"',
+        #    f'This shows what would change in the cluster based on "plain_secrets.{format}"',
         #    fg="yellow",
         # )
 
@@ -156,7 +182,7 @@ def seal(path: str) -> None:
         if click.confirm("Are you sure?"):
             seal_obj = Seal(secret_state)
             seal_obj.run()
-            click.echo("Successfully sealed secrets to sealed_secrets.json")
+            click.echo(f"Successfully sealed secrets to {sealed_secrets_file}")
         # else:
         #    click.echo("No differences")
 

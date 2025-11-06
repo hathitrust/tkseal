@@ -3,6 +3,8 @@
 from pathlib import Path
 from unittest.mock import Mock
 
+import pytest
+
 from tkseal.secret_state import SecretState, normalize_tk_env_path
 
 
@@ -67,8 +69,11 @@ class TestSecretStateInitialization:
         assert normalize_tk_env_path("/path/to/env") == "/path/to/env"  # No change
         assert normalize_tk_env_path("/path/to/env.jsonnet") == "/path/to/env.jsonnet"
 
-    def test_file_paths_use_configuration_constants(
-        self, mocker, temp_tanka_env, mock_tk_env
+    @pytest.mark.parametrize(
+        "format,expected_ext", [("json", ".json"), ("yaml", ".yaml")]
+    )
+    def test_file_paths_use_format_extension(
+        self, mocker, temp_tanka_env, mock_tk_env, format, expected_ext
     ):
         """Test that file paths use configuration constants."""
         mocker.patch("tkseal.secret_state.TKEnvironment", return_value=mock_tk_env)

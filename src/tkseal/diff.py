@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from tkseal.configuration import PLAIN_SECRETS_FILE
 from tkseal.secret_state import SecretState
+from tkseal.tkseal_utils import normalize_to_json
 
 
 @dataclass
@@ -27,11 +28,18 @@ class Diff:
         kube_secrets = self.secret_state.kube_secrets()
         plain_secrets = self.secret_state.plain_secrets()
 
+        # Normalize both to JSON for comparison
+        kube_secrets_normalized = normalize_to_json(kube_secrets, "json")
+        plain_secrets_normalized = normalize_to_json(
+            plain_secrets, self.secret_state.format
+        )
+
+        #
         return self._generate_diff(
-            from_text=kube_secrets,
-            to_text=plain_secrets,
+            from_text=kube_secrets_normalized,
+            to_text=plain_secrets_normalized,
             from_label="cluster",
-            to_label=PLAIN_SECRETS_FILE,
+            to_label=f"{PLAIN_SECRETS_FILE}.{self.secret_state.format}",
         )
 
     def pull(self) -> DiffResult:
@@ -41,10 +49,16 @@ class Diff:
         plain_secrets = self.secret_state.plain_secrets()
         kube_secrets = self.secret_state.kube_secrets()
 
+        # Normalize both to JSON for comparison
+        plain_secrets_normalized = normalize_to_json(
+            plain_secrets, self.secret_state.format
+        )
+        kube_secrets_normalized = normalize_to_json(kube_secrets, "json")
+
         return self._generate_diff(
-            from_text=plain_secrets,
-            to_text=kube_secrets,
-            from_label=PLAIN_SECRETS_FILE,
+            from_text=plain_secrets_normalized,
+            to_text=kube_secrets_normalized,
+            from_label=f"{PLAIN_SECRETS_FILE}.{self.secret_state.format}",
             to_label="cluster",
         )
 

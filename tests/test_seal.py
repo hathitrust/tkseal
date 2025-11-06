@@ -7,6 +7,7 @@ import pytest
 
 from tkseal.exceptions import TKSealError
 from tkseal.seal import Seal
+from tkseal.serializers import deserialize_secrets
 
 
 @pytest.fixture
@@ -60,9 +61,15 @@ class TestSealKubesealMethod:
 class TestSealRun:
     """Test Seal.run() method."""
 
-    def test_run_seals_and_writes_secrets(self, mock_kubeseal, seal_test_setup):
-        """Test run() seals all key-value pairs and writes proper SealedSecret JSON."""
-        mock_state, sealed_file = seal_test_setup
+    @pytest.mark.parametrize("format", ["json", "yaml"])
+    def test_run_seals_and_writes_secrets(self, mock_kubeseal, seal_test_setup, format):
+        """Test run() seals all key-value pairs and writes proper SealedSecret in JSON/YAML format."""
+        mock_state, sealed_file_json = seal_test_setup
+
+        # Update sealed file path for the format
+        sealed_file = sealed_file_json.parent / f"sealed_secrets.{format}"
+        mock_state.sealed_secrets_file_path = sealed_file
+        mock_state.format = format
 
         # Mock KubeSeal.seal to return different values for each key
         mock_kubeseal.side_effect = ["sealed-username", "sealed-password"]
@@ -88,12 +95,12 @@ class TestSealRun:
         assert sealed_file.exists()
         content = sealed_file.read_text()
 
-        # Verify it's pretty-printed JSON
+        # Verify it's pretty-printed (has newlines and indentation)
         assert "\n" in content
-        assert "  " in content  # 2-space indentation
 
-        # Parse and verify structure
-        sealed_secrets = json.loads(content)
+        # Parse and verify structure (format-agnostic deserialization)
+
+        sealed_secrets = deserialize_secrets(content, format)
         assert isinstance(sealed_secrets, list)
         assert len(sealed_secrets) == 1
 

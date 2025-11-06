@@ -45,6 +45,7 @@ class SecretState:
         plain_secrets_file_path: Path,
         sealed_secrets_file_path: Path,
         tk_env: TKEnvironment,
+        format: str = "json",
     ):
         """Initialize SecretState.
 
@@ -55,16 +56,18 @@ class SecretState:
             plain_secrets_file_path: Path to plain_secrets.json file
             sealed_secrets_file_path: Path to sealed_secrets.json file
             tk_env: TKEnvironment instance for this environment
+            format: File format for secrets ('json' or 'yaml'), defaults to 'json'
         """
         self.tk_env_path = tk_env_path
         self.plain_secrets_file_path = plain_secrets_file_path
         self.sealed_secrets_file_path = sealed_secrets_file_path
         self._tk_env = tk_env
+        self.format = format
         # Optional[Secrets] signifying the absence of the secrets_cache data until it is needed and loaded
         self._secrets_cache: Secrets | None = None  # Cache for the Secrets object
 
     @classmethod
-    def from_path(cls, path: str) -> "SecretState":
+    def from_path(cls, path: str, format: str = "json") -> "SecretState":
         """Create SecretState from a Tanka environment path.
 
         This method normalizes the path by removing trailing slashes
@@ -72,6 +75,7 @@ class SecretState:
 
         Args:
             path: Path to Tanka environment directory or .jsonnet file
+            format: File format for secrets ('json' or 'yaml'), defaults to 'json'
 
         Returns:
             SecretState: Initialized SecretState instance
@@ -91,17 +95,18 @@ class SecretState:
         # Initialize TKEnvironment (will validate path exists)
         tk_env = TKEnvironment(normalized_path)
 
-        # Construct file paths
+        # Construct file paths with the correct extension based on format
         base_path = Path(normalized_path)
         # Using Pathlib we can easily join paths and get file names, parent directories, etc.
-        plain_secrets_path = base_path / configuration.PLAIN_SECRETS_FILE
-        sealed_secrets_path = base_path / configuration.SEALED_SECRETS_FILE
+        plain_secrets_path = base_path / f"plain_secrets.{format}"
+        sealed_secrets_path = base_path / f"sealed_secrets.{format}"
 
         return cls(
             tk_env_path=normalized_path,
             plain_secrets_file_path=plain_secrets_path,
             sealed_secrets_file_path=sealed_secrets_path,
             tk_env=tk_env,
+            format=format,
         )
 
     @property
