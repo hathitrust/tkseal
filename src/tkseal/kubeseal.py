@@ -27,14 +27,14 @@ class KubeSeal:
         """
         # Construct kubeseal command
         cmd = [
-                "kubeseal",
-                "--raw",
-                "--namespace",
-                namespace,
-                "--name",
-                name,
-                "--context",
-                context,
+            "kubeseal",
+            "--raw",
+            "--namespace",
+            namespace,
+            "--name",
+            name,
+            "--context",
+            context,
         ]
 
         # Execute kubeseal command with value piped via stdin

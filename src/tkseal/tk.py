@@ -2,7 +2,6 @@ import os
 import re
 import shutil
 
-
 from tkseal.exceptions import TKSealError
 from tkseal.tkseal_utils import run_command
 
@@ -57,6 +56,7 @@ class TKEnvironment:
         cmd = ["tk", "status", path]
         result = run_command(cmd)
         return result
+
     @property
     def context(self) -> str:
         """Extract Kubernetes context from tk status output"""
@@ -73,7 +73,7 @@ class TKEnvironment:
             raise TKSealError("Namespace not found in tk status output")
         return namespace
 
-    def _get_val(self, key: str) -> str | None:
+    def _get_val(self, key: str) -> str:
         """
         Helper to extract values from tk status output lines.
 
@@ -88,4 +88,4 @@ class TKEnvironment:
         for line in self._status_lines:
             if match := re.match(pattern, line):
                 return match.group(1)
-        return None
+        return ""

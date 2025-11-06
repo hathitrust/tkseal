@@ -153,25 +153,6 @@ class TestSecretStatePlainSecrets:
 class TestSecretStateKubeSecrets:
     """Test kube_secrets method for retrieving cluster secrets."""
 
-    def test_kube_secrets_calls_secrets_for_tk_env(
-        self, mocker, temp_tanka_env, mock_tk_env
-    ):
-        """Test that kube_secrets calls Secrets.for_tk_env with correct path."""
-        mocker.patch("tkseal.secret_state.TKEnvironment", return_value=mock_tk_env)
-
-        # Mock Secrets.for_tk_env
-        mock_secrets = mocker.patch("tkseal.secret_state.Secrets")
-        mock_secrets_instance = Mock()
-        mock_secrets_instance.to_json.return_value = '{"test": "data"}'
-        mock_secrets.for_tk_env.return_value = mock_secrets_instance
-
-        state = SecretState.from_path(str(temp_tanka_env))
-        result = state.kube_secrets()
-
-        # Should call Secrets.for_tk_env with the normalized path
-        mock_secrets.for_tk_env.assert_called_once_with(str(temp_tanka_env))
-        assert result == '{"test": "data"}'
-
     def test_kube_secrets_uses_normalized_path(
         self, mocker, temp_tanka_env, mock_tk_env
     ):

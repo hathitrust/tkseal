@@ -8,9 +8,10 @@ This module provides the SecretState class which coordinates access to:
 
 import os
 from pathlib import Path
+from typing import cast
 
 from tkseal import configuration
-from tkseal.secret import Secrets
+from tkseal.secret import ForbiddenSecret, Secrets
 from tkseal.tk import TKEnvironment
 
 
@@ -59,6 +60,8 @@ class SecretState:
         self.plain_secrets_file_path = plain_secrets_file_path
         self.sealed_secrets_file_path = sealed_secrets_file_path
         self._tk_env = tk_env
+        # Optional[Secrets] signifying the absence of the secrets_cache data until it is needed and loaded
+        self._secrets_cache: Secrets | None = None  # Cache for the Secrets object
 
     @classmethod
     def from_path(cls, path: str) -> "SecretState":
@@ -141,5 +144,28 @@ class SecretState:
         Raises:
             TKSealError: If there's an error retrieving secrets from cluster
         """
-        secrets = Secrets.for_tk_env(self.tk_env_path)
-        return secrets.to_json()
+        # Cache the Secrets object for access to forbidden_secrets and to avoid multiple cluster queries
+        if self._secrets_cache is None:
+            # Create Secrets object from the Tanka environment
+            self._secrets_cache = Secrets.for_tk_env(self.tk_env_path)
+        # Return the JSON representation of the secrets that is the entry point of other methods
+
+        assert self._secrets_cache is not None
+        return cast(str, self._secrets_cache.to_json())
+
+    def get_forbidden_secrets(self) -> list[ForbiddenSecret]:
+        """Get list of forbidden secrets that exist in the namespace but cannot be pulled.
+
+        Returns:
+            list[ForbiddenSecret]: List of a forbidden secret object.
+
+        Note:
+            This method requires kube_secrets() to be called first to populate the cache.
+            If kube_secrets() hasn't been called, this will trigger a cluster query.
+        """
+        # Ensure secrets are loaded
+        if self._secrets_cache is None:
+            self.kube_secrets()  # This will populate _secrets_cache
+
+        assert self._secrets_cache is not None
+        return self._secrets_cache.forbidden_secrets

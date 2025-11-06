@@ -3,21 +3,23 @@ import subprocess
 from tkseal import TKSealError
 
 
-def run_command(cmd: list[str], value: str = None) -> str:
+def run_command(cmd: list[str], value: str = "") -> str:
     """Execute a kubectl command and return its output.
 
-            Args:
-                cmd: Command to execute as a list of strings
-                value: Optional input value to pass via stdin
+    Args:
+        cmd: Command to execute as a list of strings
+        value: Optional input value to pass via stdin
 
-            Returns:
-                The command output as a string
+    Returns:
+        The command output as a string
 
-            Raises:
-                TKSealError: If the command fails to execute or returns non-zero
-            """
+    Raises:
+        TKSealError: If the command fails to execute or returns non-zero
+    """
     try:
-        result = subprocess.run(cmd, input=value, capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            cmd, input=value, capture_output=True, text=True, check=True
+        )
         return result.stdout
     except subprocess.CalledProcessError as e:
         raise TKSealError(
