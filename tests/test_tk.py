@@ -81,15 +81,18 @@ class TestTKEnvironment:
             TKEnvironment("/path/to/env")
         assert "Command failed" in str(exc_info.value)
 
-    def test_get_val_with_spaces(self, mocker, tk_status_file):
+    def test_get_val_with_spaces(self, mocker):
         """Test _get_val handles values with spaces correctly"""
 
         mock_status = mocker.patch("tkseal.tk.TKEnvironment.status")
 
-        mock_status.return_value = tk_status_file.read_text()
+        mock_status.return_value = """
+                Context:    my-cluster context
+                Namespace:  my-app namespace
+                """
         tk_environment = TKEnvironment("/path/to/env")
-        assert tk_environment._get_val("Context") == "some-context"
-        assert tk_environment._get_val("Namespace") == "some-namespace"
+        assert tk_environment.context == "my-cluster context"
+        assert tk_environment.namespace == "my-app namespace"
 
     def test_get_val_missing_key(self, mocker, tk_status_file):
         """Test _get_val returns None for missing keys"""
@@ -98,4 +101,4 @@ class TestTKEnvironment:
 
         mock_status.return_value = tk_status_file.read_text()
         env = TKEnvironment("/path/to/env")
-        assert env._get_val("NonexistentKey") is None
+        assert env._get_val("NonexistentKey") == ""

@@ -1,8 +1,3 @@
-import subprocess
-
-import pytest
-
-from tkseal.exceptions import TKSealError
 from tkseal.kubeseal import KubeSeal
 
 
@@ -63,5 +58,3 @@ class TestKubeSealSealing:
         call_args = mock_run.call_args
         assert call_args.kwargs["value"] == special_value
         assert result == "sealed-special-chars"
-
-

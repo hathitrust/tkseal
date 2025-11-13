@@ -2,6 +2,8 @@
 
 import json
 
+from tkseal import TKSealError
+from tkseal.configuration import PLAIN_SECRETS_FILE
 from tkseal.kubeseal import KubeSeal
 from tkseal.secret_state import SecretState
 
@@ -56,7 +58,17 @@ class Seal:
         """
         # Read and parse plain secrets
         plain_secrets_text = self.secret_state.plain_secrets()
-        plain_secrets = json.loads(plain_secrets_text)
+
+        # Check if plain_secrets_text is empty or exists
+        if not plain_secrets_text or plain_secrets_text.strip() == "":
+            raise TKSealError(
+                f"No plain secrets found. Please create {PLAIN_SECRETS_FILE} "
+                f"or run 'tkseal pull' first."
+            )
+        try:
+            plain_secrets = json.loads(plain_secrets_text)
+        except json.decoder.JSONDecodeError as e:
+            raise TKSealError(f"Invalid JSON in {PLAIN_SECRETS_FILE}: {str(e)}") from e
 
         # Process each secret
         sealed_secrets = []
@@ -79,7 +91,9 @@ class Seal:
                         "metadata": {
                             "name": secret["name"],
                             "namespace": self.secret_state.namespace,
-                        }
+                        },
+                        # Preserve secret type if specified in plain_secrets.json
+                        **({"type": secret["type"]} if "type" in secret else {}),
                     },
                     "encryptedData": encrypted_data,
                 },

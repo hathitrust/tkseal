@@ -52,6 +52,9 @@ poetry run ruff format src/ tests/
 
 # Type checking
 poetry run mypy src/
+
+Note: The file `py.typed`  has added to the package and specified in pyproject.toml to ensure mypy treats 
+tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module but no type hints or library stubs" warnings.
 ```
 
 ## Available Commands
@@ -63,7 +66,48 @@ poetry run mypy src/
 - 💻 `tkseal seal PATH` - Convert plain_secrets.json to sealed_secrets.json
 - 
 
-## Previous logic documentation
+## Logic documentation
+
+### Forbidden Secrets Warning
+
+  **Core Functionality**
+
+  This application allows users to pull different kinds of Kubernetes secrets into their local Tanka environment. 
+  However, certain types of secrets are considered forbidden for pulling due to their sensitive nature or 
+  system management roles. 
+  
+  The pull command includes the `forbidden secrets warning` feature that prevents accidental exposure of sensitive 
+  system secrets while keeping users informed about what's being filtered out when pulling secrets from a Kubernetes
+  namespace into a local Tanka environment using the `tkseal pull` command.
+
+  **Implementation Details**
+
+  The detection method involves checking the types of secrets present in the specified Kubernetes namespace against 
+  a predefined list of forbidden secret types. These forbidden types typically include:
+
+  - `kubernetes.io/service-account-token`
+  - `helm.sh/release.v1`
+  - Any other secret types deemed sensitive or system-managed
+  - The forbidden and allowed secret types are defined in `/src/tkseal/configuration.py` 
+
+  The implementation uses the following logic:
+
+  1. Fetch all secrets from the specified Kubernetes namespace using `kubectl`.
+  2. Iterate through each secret and check its type.
+  3. If a secret's type matches any in the forbidden list, it is flagged.
+  4. Collect all flagged secrets and prepare a warning message.
+
+  **Usage Example**
+  When a user runs `tkseal pull`, if there are forbidden secrets (like service-account-tokens, helm releases, etc.) 
+  in the namespace:
+
+  `tkseal pull environments/testing/`
+
+  This shows how "plain_secrets.json" would change based on what's in the Kubernetes cluster
+
+  `⚠ Warning: Found forbidden secrets in namespace that cannot be pulled:
+    - default-token-abc (type: kubernetes.io/service-account-token)
+    - helm-release-v1 (type: helm.sh/release.v1)`
 
 ### ready Command
 
@@ -196,5 +240,3 @@ The command will:
 2. Display diff of what would change
 3. Ask for confirmation
 4. Seal secrets to sealed_secrets.json
-
-

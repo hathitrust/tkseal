@@ -33,7 +33,6 @@ class TestSealInitialization:
     def test_seal_initializes_with_secret_state(self, simple_mock_secret_state):
         """Test Seal can be initialized with SecretState."""
         seal = Seal(simple_mock_secret_state)
-
         assert seal.secret_state == simple_mock_secret_state
 
 
@@ -182,11 +181,11 @@ class TestSealErrorHandling:
     def test_run_handles_invalid_json(self, simple_mock_secret_state):
         """Test run() handles malformed plain_secrets.json."""
         # Setup
-        simple_mock_secret_state.plain_secrets.return_value = "invalid json {{"
+        simple_mock_secret_state.plain_secrets.return_value = "Invalid JSON {{"
 
         # Run seal and expect JSONDecodeError
         seal = Seal(simple_mock_secret_state)
-        with pytest.raises(json.JSONDecodeError):
+        with pytest.raises(TKSealError):
             seal.run()
 
     def test_run_handles_file_write_error(self, mocker, mock_kubeseal, seal_test_setup):

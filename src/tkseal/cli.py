@@ -89,16 +89,25 @@ def pull(path: str) -> None:
         # Create SecretState from path
         secret_state = SecretState.from_path(path)
 
+        # Create Pull instance and show differences
+        pull_obj = Pull(secret_state)
+        result = pull_obj.run()
+
+        # Check and warn about forbidden secrets
+        forbidden_secrets = secret_state.get_forbidden_secrets()
+        if forbidden_secrets:
+            click.secho(
+                "\nThese secrets are system-managed and will not be included in plain_secrets.json:",
+                fg="yellow",
+            )
+            for secret in forbidden_secrets:
+                click.secho(f"  - {secret.name} (type: {secret.type})", fg="yellow")
+
         # Show informational message
         click.secho(
             'This shows how "plain_secrets.json" would change based on what\'s in the Kubernetes cluster',
             fg="yellow",
         )
-
-        # Create Pull instance and show differences
-        pull_obj = Pull(secret_state)
-        result = pull_obj.run()
-
         # Display diff results
         if result.has_differences:
             click.echo(result.diff_output)
@@ -130,26 +139,26 @@ def seal(path: str) -> None:
         secret_state = SecretState.from_path(path)
 
         # Show informational message
-        click.secho(
-            'This shows what would change in the cluster based on "plain_secrets.json"',
-            fg="yellow",
-        )
+        # click.secho(
+        #    'This shows what would change in the cluster based on "plain_secrets.json"',
+        #    fg="yellow",
+        # )
 
         # Show diff to preview changes
-        diff_obj = Diff(secret_state)
-        result = diff_obj.plain()
+        # diff_obj = Diff(secret_state)
+        # result = diff_obj.plain()
 
         # Display diff results
-        if result.has_differences:
-            click.echo(result.diff_output)
+        # if result.has_differences:
+        #    click.echo(result.diff_output)
 
-            # Confirm before sealing
-            if click.confirm("Are you sure?"):
-                seal_obj = Seal(secret_state)
-                seal_obj.run()
-                click.echo("Successfully sealed secrets to sealed_secrets.json")
-        else:
-            click.echo("No differences")
+        # Confirm before sealing
+        if click.confirm("Are you sure?"):
+            seal_obj = Seal(secret_state)
+            seal_obj.run()
+            click.echo("Successfully sealed secrets to sealed_secrets.json")
+        # else:
+        #    click.echo("No differences")
 
     except TKSealError as e:
         click.echo(f"Error: {e}", err=True)

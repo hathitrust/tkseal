@@ -24,8 +24,6 @@ from tkseal.tk import TKEnvironment
 Notes:
   - All tests use tk_status.txt to ensure consistent context/namespace values.
   """
-
-
 @pytest.fixture
 def tk_status_file(tmp_path):
     """Copy the sample tests/tk_status.txt into a temporary file and return its path."""
@@ -85,6 +83,7 @@ def simple_mock_secret_state(mocker):
     mock_state.sealed_secrets_file_path = Path("/fake/sealed_secrets.json")
     mock_state.plain_secrets.return_value = "[]"
     mock_state.kube_secrets.return_value = "[]"
+    mock_state.get_forbidden_secrets.return_value = []  # No forbidden secrets by default
     return mock_state
 
 
@@ -113,6 +112,7 @@ def mock_secret_state(mocker, tk_status_file, mock_tk_env, temp_tanka_env):
     # default return values; tests can override these attributes/callables as needed
     mock_secret_state.plain_secrets.return_value = "[]"
     mock_secret_state.kube_secrets.return_value = "[]"
+    mock_secret_state.get_forbidden_secrets.return_value = []  # No forbidden secrets by default
 
     # Patch the factory used by most code paths to create SecretState from a path
     mocker.patch(

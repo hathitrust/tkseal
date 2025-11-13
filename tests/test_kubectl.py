@@ -26,10 +26,11 @@ class TestKubectl:
         assert KubeCtl.exists() is False
 
     def test_get_secrets_success(self, mocker, load_secret_file):
+        """Test successful retrieval and parsing of Kubernetes secrets."""
         test_secrets_yaml, test_secrets_dict = load_secret_file
 
         mock_run = mocker.patch("tkseal.kubectl.run_command")
-        # with patch('tkseal.kubectl.KubeCtl._run_command') as mock_run:
+
         mock_run.return_value = test_secrets_yaml
         result = KubeCtl.get_secrets("test-context", "test-namespace")
 
@@ -45,7 +46,7 @@ class TestKubectl:
             ]
         )
         assert result == test_secrets_dict
-        # Verify structure of returned data
+        # Verify the structure of returned data
         assert result["apiVersion"] == "v1"
         assert result["kind"] == "List"
         assert "items" in result

@@ -1,6 +1,30 @@
 import base64
+import json
 
+import pytest
+
+from tkseal import TKSealError
 from tkseal.secret import Secret, SecretDataPair, Secrets
+
+@pytest.fixture()
+def kubectl_output():
+    """Fixture providing sample kubectl output with multiple secrets."""
+    return {
+        "apiVersion": "v1",
+        "kind": "List",
+        "items": [
+            {
+                "metadata": {"name": "secret1"},
+                "data": {"key1": "dmFsdWUx"},  # base64 encoded "value1"
+                "type": "Opaque",
+            },
+            {
+                "metadata": {"name": "secret2"},
+                "data": {"key2": "dmFsdWUy"},  # base64 encoded "value2"
+                "type": "kubernetes.io/basic-auth",
+            },
+        ],
+    }
 
 
 def test_secret_data_pair():
@@ -18,6 +42,17 @@ def test_secret_name():
     raw = {"metadata": {"name": "test-secret"}, "data": {}}
     secret = Secret(raw)
     assert secret.name == "test-secret"
+
+
+@pytest.mark.parametrize("type_value", ["Opaque", "kubernetes.io/basic-auth"])
+def test_secret_type(type_value):
+    raw = {
+        "metadata": {"name": "test-secret"},
+        "type": type_value,
+        "data": {},
+    }
+    secret = Secret(raw)
+    assert secret.type == type_value
 
 
 def test_secret_data():
@@ -49,6 +84,7 @@ def test_secret_empty_data():
     assert secret.name == "empty-secret"
     assert secret.data == []
 
+
 def test_secrets_data_collection():
     """Test that Secret.data returns a list of SecretDataPair objects."""
     raw = {
@@ -74,26 +110,46 @@ def test_secrets_data_collection():
     assert data[1].encoded_value == "dXNlcjI="
 
 
-def test_secrets_with_kubectl_format():
+def test_secrets_with_kubectl_format(kubectl_output):
     """Test that Secrets accepts kubectl output format with 'items' key."""
-    kubectl_output = {
-        "apiVersion": "v1",
-        "kind": "List",
-        "items": [
-            {
-                "metadata": {"name": "secret1"},
-                "data": {"key1": "dmFsdWUx"},  # base64 encoded "value1"
-            },
-            {
-                "metadata": {"name": "secret2"},
-                "data": {"key2": "dmFsdWUy"},  # base64 encoded "value2"
-            },
-        ],
-    }
+
     secrets = Secrets(kubectl_output)
     assert len(secrets.items) == 2
     assert secrets.items[0].name == "secret1"
     assert secrets.items[1].name == "secret2"
+
+
+def test_secret_allowed_type(kubectl_output):
+    secrets = Secrets(kubectl_output)
+
+    assert secrets.items[0].type == "Opaque"
+    assert secrets.items[1].type == "kubernetes.io/basic-auth"
+    assert secrets.forbidden_secrets == []
+
+
+def test_secret_forbidden_type(kubectl_output):
+    kubectl_output["items"][0]["type"] = "kubernetes.io/service-account-token"
+
+    # Check that Secrets filters out forbidden types
+    secrets = Secrets(kubectl_output)
+    assert len(secrets.items) == 1  # Only one secret should be included
+    assert secrets.items[0].name == "secret2"
+    assert secrets.items[0].type == "kubernetes.io/basic-auth"
+
+    # Check that forbidden_secrets tracks the excluded secret
+    assert len(secrets.forbidden_secrets) == 1
+    # forbidden_names = [list(item.keys())[0] for item in secrets.forbidden_secrets]
+    forbidden_names = [secret.name for secret in secrets.forbidden_secrets]
+    assert "secret1" in forbidden_names
+    assert secrets.forbidden_secrets[0].type == "kubernetes.io/service-account-token"
+
+    # Check that to_json does not include the forbidden secret
+    keys_in_json = [item["name"] for item in json.loads(secrets.to_json())]
+    assert "secret1" not in keys_in_json
+
+    with pytest.raises(TKSealError):
+        _ = secrets.forbidden_secrets[0].data
+
 
 def test_secrets_for_tk_env(mocker):
     """Test that Secrets.for_tk_env() integrates TKEnvironment and KubeCtl correctly."""

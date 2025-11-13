@@ -9,6 +9,7 @@ description = "A command-line utility for managing sealed secrets in Kubernetes 
 readme = "README.md"
 authors = ["K'Ron Spar <kspar@umich.edu>", "Lianet Sepulveda Torres <lisepul@umich.edu>"]
 packages = [{include = "tkseal", from = "src"}]
+include = ["src/tkseal/py.typed"]
 keywords = ["kubernetes", "secrets", "sealed-secrets", "tanka", "k8s"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -73,6 +74,8 @@ ignore = [
   line-ending = "auto"
 
 [tool.mypy]
+mypy_path = "src"
+files = "src/tkseal"
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
