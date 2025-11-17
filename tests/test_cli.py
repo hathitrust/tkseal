@@ -260,3 +260,47 @@ class TestSealCommand:
         assert result.exit_code == 1
         assert "Error" in result.output
         assert "kubeseal command failed" in result.output
+
+
+class TestFormatFlag:
+    """Test cases for the --format flag on pull and seal commands."""
+
+    def test_pull_command_with_yaml_format_flag(
+        self, cli_runner, mock_pull_cli, temp_tanka_env, mock_secret_state
+    ):
+        """Test pull command with --format yaml creates .yaml file."""
+        # Simulate 'y' response to confirmation
+        result = cli_runner.invoke(
+            cli, ["pull", str(temp_tanka_env), "--format", "yaml"], input="y\n"
+        )
+
+        assert result.exit_code == 0
+        assert "plain_secrets.yaml" in result.output
+        # Verify write was called
+        mock_pull_cli.write.assert_called_once()
+
+    def test_seal_command_with_yaml_format_flag(
+        self, cli_runner, temp_tanka_env, mock_secret_state, mock_seal_cli
+    ):
+        """Test seal command with --format yaml creates .yaml file."""
+        mock_seal, mock_diff = mock_seal_cli
+
+        # Simulate 'y' response to confirmation
+        result = cli_runner.invoke(
+            cli, ["seal", str(temp_tanka_env), "--format", "yaml"], input="y\n"
+        )
+
+        assert result.exit_code == 0
+        assert "sealed_secrets.yaml" in result.output
+        # Verify Seal.run() was called
+        mock_seal.run.assert_called_once()
+
+    def test_invalid_format_flag_shows_error(self, cli_runner, temp_tanka_env):
+        """Test that invalid --format value shows error."""
+        result = cli_runner.invoke(
+            cli, ["pull", str(temp_tanka_env), "--format", "xml"]
+        )
+
+        # Should fail with exit code 2 (usage error)
+        assert result.exit_code == 2
+        assert "Invalid value for '--format'" in result.output or "invalid choice" in result.output.lower()

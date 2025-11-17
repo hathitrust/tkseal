@@ -8,11 +8,11 @@ The directory changes based on which Tanka environment you're working with, but 
 and defined in the configuration module.
 """
 
-# File name for plain (unencrypted) secrets JSON file
-PLAIN_SECRETS_FILE = "plain_secrets.json"
+# File name for plain (unencrypted) secrets JSON/YAML file
+PLAIN_SECRETS_FILE = "plain_secrets"
 
 # File name for sealed (encrypted) secrets JSON file
-SEALED_SECRETS_FILE = "sealed_secrets.json"
+SEALED_SECRETS_FILE = "sealed_secrets"
 
 # Allowed secret types that tkseal can manage
 MANAGED_SECRET_TYPES = {

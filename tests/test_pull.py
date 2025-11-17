@@ -41,14 +41,16 @@ class TestPullWrite:
         # Should write to the file
         mock_path.write_text.assert_called_once_with(sample_kube_secrets)
 
+    @pytest.mark.parametrize("format", ["json", "yaml"])
     def test_write_with_real_temp_file(
-        self, tmp_path, simple_mock_secret_state, sample_kube_secrets
+        self, tmp_path, simple_mock_secret_state, sample_kube_secrets, format
     ):
-        """Test write() actually writes to a real file."""
-        # Setup: Create real temp file path
-        temp_file = tmp_path / "plain_secrets.json"
+        """Test write() actually writes to a real file in both JSON and YAML formats."""
+        # Setup: Create real temp file path with format-specific extension
+        temp_file = tmp_path / f"plain_secrets.{format}"
         simple_mock_secret_state.plain_secrets_file_path = temp_file
         simple_mock_secret_state.kube_secrets.return_value = sample_kube_secrets
+        simple_mock_secret_state.format = format
 
         pull = Pull(simple_mock_secret_state)
         pull.write()
@@ -56,9 +58,14 @@ class TestPullWrite:
         # Verify file was created
         assert temp_file.exists()
 
-        # Verify file contents
+        # Verify file contents contain expected data
         written_content = temp_file.read_text()
-        assert written_content == sample_kube_secrets
+
+        # For JSON, content should match exactly
+        if format == "json":
+            assert written_content == sample_kube_secrets
+
+        # For both formats, verify the data is present
         assert "app-secret" in written_content
         assert "newsecret456" in written_content
 
