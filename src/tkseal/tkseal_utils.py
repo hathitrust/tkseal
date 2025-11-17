@@ -1,7 +1,7 @@
 import subprocess
 
 from tkseal import TKSealError
-from tkseal.serializers import deserialize_secrets, serialize_secrets
+from tkseal.serializers import get_serializer
 
 
 def run_command(cmd: list[str], value: str = "") -> str:
@@ -53,5 +53,6 @@ def normalize_to_json(content: str, source_format: str) -> str:
         return "[]"
 
     # Deserialize from source format, then serialize to JSON
-    data = deserialize_secrets(content, format=source_format)
-    return serialize_secrets(data, format="json")
+    secret_serializer = get_serializer(source_format)
+    data = secret_serializer.deserialize_secrets(content)
+    return get_serializer("json").serialize_secrets(data)

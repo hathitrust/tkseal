@@ -1,6 +1,7 @@
 """Serialization helpers for converting secrets between JSON and YAML formats."""
 
 import json
+from abc import ABC
 
 import yaml
 
@@ -11,6 +12,7 @@ def _str_presenter(dumper, data):
 
     Uses block scalar style (|) for strings containing newlines,
     ensuring readable YAML output for config files, certificates, etc.
+    Implementation inspired by: https://www.hrekov.com/blog/yaml-formatting-custom-representer
     """
     if "\n" in data:
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
@@ -20,51 +22,104 @@ def _str_presenter(dumper, data):
 # Register custom representer for multiline string preservation
 yaml.add_representer(str, _str_presenter)
 
+class Serializer(ABC):
+    """Abstract base class for serializer secrets."""
 
-def serialize_secrets(data: list[dict], format: str = "json") -> str:
-    """
-    Serialize secret data to JSON or YAML format.
+    def serialize_secrets(self, data: list[dict]) -> str:
+        """Serialize secret data to a string."""
+        pass
 
-    Args:
-        data: List of secret dictionaries to serialize
-        format: Output format ('json' or 'yaml')
+    def deserialize_secrets(self, content: str) -> list[dict]:
+        """Deserialize secret data from a string."""
+        pass
 
-    Returns:
-        Serialized string in the specified format
+class YAMLSerializer(Serializer):
+    """YAML serializer for secrets."""
 
-    Raises:
-        ValueError: If the format is not 'json' or 'yaml'
-    """
-    if format == "json":
-        return json.dumps(data, indent=2)
-    elif format == "yaml":
+    def serialize_secrets(self, data: list[dict]) -> str:
+        """
+        Serialize secret data to YAML format.
+
+        Args:
+            data: List of secret dictionaries to serialize
+            format: Output format 'yaml'
+
+        Returns:
+            Serialized string in the YAML format
+        """
         return yaml.dump(
             data,
-            default_flow_style=False, # Controls the output style. False means indented block forma. with each item on a new line. Preferred output for config files.
+            default_flow_style=False, # Controls the output style.
+            # False means indented block format.
+            # with each item
+            # on a new line.
+            # Preferred output for config files.
             sort_keys=False,
             allow_unicode=True,
         )
-    else:
-        raise ValueError(f"Unsupported format: {format}. Use 'json' or 'yaml'.")
 
+    def deserialize_secrets(self, content: str) -> list[dict]:
+        """
+        Deserialize secret data from YAML format.
 
-def deserialize_secrets(content: str, format: str = "json") -> list[dict]:
+        Args:
+            content: Serialized string to deserialize
+            format: Input format 'yaml'
+
+        Returns:
+            List of secret dictionaries
+        """
+        return yaml.safe_load(content)
+
+class JSONSerializer(Serializer):
+    """JSON serializer for secrets."""
+
+    def serialize_secrets(self, data: list[dict]) -> str:
+        """
+        Serialize secret data to JSON.
+
+        Args:
+            data: List of secret dictionaries to serialize
+            format: Output format 'json'
+
+        Returns:
+            Serialized string in the JSON format
+        """
+        return json.dumps(data, indent=2)
+
+    def deserialize_secrets(self, content: str) -> list[dict]:
+
+        """
+        Deserialize secret data from JSON format.
+
+        Args:
+            content: Serialized string to deserialize
+            format: Input format 'json'
+
+        Returns:
+            List of secret dictionaries
+
+        """
+
+        return json.loads(content)
+
+def get_serializer(format: str) -> Serializer:
     """
-    Deserialize secret data from JSON or YAML format.
+    Factory function to get the appropriate serializer based on format.
 
     Args:
-        content: Serialized string to deserialize
-        format: Input format ('json' or 'yaml')
+        format: 'json' or 'yaml'
 
     Returns:
-        List of secret dictionaries
+        Serializer instance
 
     Raises:
         ValueError: If the format is not 'json' or 'yaml'
     """
     if format == "json":
-        return json.loads(content)
+        return JSONSerializer()
     elif format == "yaml":
-        return yaml.safe_load(content)
+        return YAMLSerializer()
     else:
         raise ValueError(f"Unsupported format: {format}. Use 'json' or 'yaml'.")
+

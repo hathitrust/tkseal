@@ -7,7 +7,7 @@ import pytest
 
 from tkseal.exceptions import TKSealError
 from tkseal.seal import Seal
-from tkseal.serializers import deserialize_secrets
+from tkseal.serializers import get_serializer
 
 
 @pytest.fixture
@@ -99,8 +99,8 @@ class TestSealRun:
         assert "\n" in content
 
         # Parse and verify structure (format-agnostic deserialization)
-
-        sealed_secrets = deserialize_secrets(content, format)
+        secret_serializer = get_serializer(format)
+        sealed_secrets = secret_serializer.deserialize_secrets(content)
         assert isinstance(sealed_secrets, list)
         assert len(sealed_secrets) == 1
 

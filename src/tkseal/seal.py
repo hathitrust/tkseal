@@ -6,7 +6,7 @@ from tkseal import TKSealError
 from tkseal.configuration import PLAIN_SECRETS_FILE
 from tkseal.kubeseal import KubeSeal
 from tkseal.secret_state import SecretState
-from tkseal.serializers import deserialize_secrets, serialize_secrets
+from tkseal.serializers import get_serializer
 
 
 class Seal:
@@ -68,9 +68,8 @@ class Seal:
 
         # Deserialize from the file format (could be JSON or YAML)
         try:
-            plain_secrets = deserialize_secrets(
-                plain_secrets_text, self.secret_state.format
-            )
+            secret_serializer = get_serializer(self.secret_state.format)
+            plain_secrets = secret_serializer.deserialize_secrets(plain_secrets_text)
         except (json.JSONDecodeError, Exception) as e:
             raise TKSealError(
                 f"Invalid format in plain_secrets file: {str(e)}"
@@ -106,6 +105,6 @@ class Seal:
             }
             sealed_secrets.append(sealed_secret)
 
-        # Serialize and write sealed secrets to file in the specified format
-        sealed_output = serialize_secrets(sealed_secrets, self.secret_state.format)
+        # Serialize and write sealed secrets to file in the specifier
+        sealed_output = secret_serializer.serialize_secrets(sealed_secrets)
         self.secret_state.sealed_secrets_file_path.write_text(sealed_output)

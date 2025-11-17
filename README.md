@@ -53,7 +53,7 @@ poetry run ruff format src/ tests/
 # Type checking
 poetry run mypy src/
 
-Note: The file `py.typed`  has added to the package and specified in pyproject.toml to ensure mypy treats 
+Note: The file `py.typed`  has been added to the package and specified in pyproject.toml to ensure mypy treats 
 tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module but no type hints or library stubs" warnings.
 ```
 
@@ -63,8 +63,8 @@ tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module 
 - ✅ `tkseal ready` - Check dependencies (WIP)
 - ✅ `tkseal diff PATH` - Show differences between plain_secrets.json and cluster
 - ✅ `tkseal pull PATH` - Extracting secrets from cluster to plain_secrets.json
-- 💻 `tkseal seal PATH` - Convert plain_secrets.json to sealed_secrets.json
-- 
+- ✅ `tkseal seal PATH` - Convert plain_secrets.json to sealed_secrets.json
+
 
 ## Logic documentation
 
@@ -103,13 +103,18 @@ tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module 
 
   `tkseal pull environments/testing/`
 
+  This shows how "plain_secrets.json" would change based on what's in the Kubernetes cluster, and it will 
+  warn about forbidden secrets:
+
+  ```
+  These secrets are system-managed and will not be included in plain_secrets.json:                                                                                                                                                         
+  - oidc-saml-proxy-tls (type: kubernetes.io/tls)
   This shows how "plain_secrets.json" would change based on what's in the Kubernetes cluster
+--- plain_secrets.json
++++ cluster
+  ```
 
-  `⚠ Warning: Found forbidden secrets in namespace that cannot be pulled:
-    - default-token-abc (type: kubernetes.io/service-account-token)
-    - helm-release-v1 (type: helm.sh/release.v1)`
-
-### ready Command
+## ready Command
 
   **Core Functionality**
 
@@ -156,7 +161,7 @@ which can then be safely stored in version control systems like Git.
   - Example usage: `printf "secret" | kubeseal --raw --namespace ns --name secret-name --context ctx`
 
 
-### diff command
+## diff command
 
 **Core Functionality**
 The diff command compares the local `plain_secrets.json` file in a specified Tanka environment directory with 
@@ -203,7 +208,7 @@ No differences
   Error: Path '/nonexistent/path' does not exist.
 ```
 
-### pull command
+## pull command
 
 **Core Functionality**
 The pull command extracts existing Kubernetes secrets from the cluster and writes them to a local plain_secrets.json 
@@ -216,11 +221,11 @@ The flow is:
 3. Prompt user for confirmation
 4. Write kube secrets to plain_secrets.json  
 
-# pull secrets (with confirmation)
+### pull secrets (with confirmation)
 `tkseal pull /path/to/tanka/environment`
 Use `tkseal pull /path/to/env --format yaml` to output plain secrets in YAML format.
 
-### seal command
+## seal command
 
 **Core Functionality**
 The seal command reads the local plain_secrets.json file in a specified Tanka environment directory,
@@ -236,7 +241,7 @@ The flow is:
 3. Seal each secret using kubeseal
 4. Write sealed secrets to sealed_secrets.json
  
-# Seal secrets (with confirmation)
+### Seal secrets (with confirmation)
 `tkseal seal /path/to/tanka/environment`
 Use `tkseal seal /path/to/env --format yaml` to output sealed secrets in YAML format.
 
@@ -245,3 +250,12 @@ The command will:
 2. Display diff of what would change
 3. Ask for confirmation
 4. Seal secrets to sealed_secrets.json
+
+# Example of errors running tkseal commands
+
+This error means that you probably are not in a Tanka environment directory or the directory structure is incorrect.
+Remember that Tanka expects a specific directory structure with `main.jsonnet` file in the environment's base directory.
+
+```Error: Failed to initialize Tanka environment: Command failed with exit code 1: Error: Unable to identify the environments base directory.
+Tried to find 'main.jsonnet' in the parent directories.
+Please refer to https://tanka.dev/directory-structure for more information```

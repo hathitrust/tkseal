@@ -1,6 +1,6 @@
 from tkseal.diff import Diff, DiffResult
 from tkseal.secret_state import SecretState
-from tkseal.serializers import deserialize_secrets, serialize_secrets
+from tkseal.serializers import get_serializer
 
 
 class Pull:
@@ -47,11 +47,12 @@ class Pull:
         # Get secrets from cluster as JSON string
         kube_secrets_json = self.secret_state.kube_secrets()
 
-        # Convert to desired format if needed
+        # Convert to the desired format if needed
         if self.secret_state.format == "yaml":
             # Deserialize JSON and re-serialize to YAML
-            secrets_data = deserialize_secrets(kube_secrets_json, "json")
-            output = serialize_secrets(secrets_data, "yaml")
+            secret_serializer = get_serializer(self.secret_state.format)
+            secrets_data = secret_serializer.deserialize_secrets(kube_secrets_json)
+            output = secret_serializer.serialize_secrets(secrets_data)
         else:
             # Keep as JSON (no conversion needed)
             output = kube_secrets_json
