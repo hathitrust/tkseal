@@ -1,0 +1,45 @@
+name: Publish Python package to GitHub Packages
+on:
+    push:
+        tags:
+            - "v*" # publish when a tag like v1.2.3 is pushed
+    release:
+        types: [published] # publish when a GitHub Release is published
+    workflow_dispatch: # allow manual run from Actions UI
+
+permissions:
+    contents: read
+    packages: write
+
+jobs:
+    build-and-publish:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                python-version: [3.11, 3.12, 3.13]
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: ${{ matrix.python-version }}
+                  cache: "pip"
+
+            - name: Install build dependencies
+              run: |
+                  python -m pip install --upgrade pip build twine
+
+            - name: Build distributions
+              run: |
+                  python -m build
+
+            - name: Publish to GitHub Packages (PyPI)
+              env:
+                  TWINE_USERNAME: ${{ github.actor }}
+                  TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  # Use the repository owner as the package owner by default.
+                  OWNER=${{ github.repository_owner }}
+                  python -m twine upload --repository-url "https://upload.pypi.pkg.github.com/${OWNER}" dist/* -u "$TWINE_USERNAME" -p "$TWINE_PASSWORD"
