@@ -3,6 +3,9 @@ on:
     push:
         branches:
             - main
+        paths-ignore:
+            - README.md
+            - .github/workflows/* # Does not run tests when only workflow files are changed.
     pull_request:
 
 jobs:
