@@ -7,6 +7,9 @@ on:
             - README.md
             - .github/workflows/* # Does not run tests when only workflow files are changed.
     pull_request:
+        paths-ignore:
+            - README.md
+            - .github/workflows/* # Does not run tests when only workflow files are changed.
 
 jobs:
     test:
