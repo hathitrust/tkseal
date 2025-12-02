@@ -1,45 +1,43 @@
-name: Publish Python package to GitHub Packages
+name: Build and Upload Release Artifacts
+
 on:
-    push:
-        tags:
-            - "v*" # publish when a tag like v1.2.3 is pushed
     release:
-        types: [published] # publish when a GitHub Release is published
-    workflow_dispatch: # allow manual run from Actions UI
+        types: [published] # Trigger ONLY when a Release is published
 
 permissions:
-    contents: read
-    packages: write
+    contents: write # Required to upload assets to a Release
 
 jobs:
-    build-and-publish:
+    build:
         runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                python-version: [3.11, 3.12, 3.13]
+
         steps:
-            - name: Checkout repository
+            - name: Checkout source
               uses: actions/checkout@v4
 
             - name: Set up Python
               uses: actions/setup-python@v4
               with:
-                  python-version: ${{ matrix.python-version }}
-                  cache: "pip"
+                  python-version: "3.12"
 
-            - name: Install build dependencies
-              run: |
-                  python -m pip install --upgrade pip build twine
+            - name: Install build tools
+              run: python -m pip install --upgrade pip build
 
-            - name: Build distributions
-              run: |
-                  python -m build
+            - name: Build distributions (wheel + sdist)
+              run: python -m build
 
-            - name: Publish to GitHub Packages (PyPI)
-              env:
-                  TWINE_USERNAME: ${{ github.actor }}
-                  TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+            # Upload build artifacts to the Release that triggered the event
+            - name: Upload artifacts to GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: ${{ github.event.release.tag_name }}
+                  files: |
+                      dist/*.whl
+                      dist/*.tar.gz
+
+            - name: Print Release URL
               run: |
-                  # Use the repository owner as the package owner by default.
-                  OWNER=${{ github.repository_owner }}
-                  python -m twine upload --repository-url "https://upload.pypi.pkg.github.com/${OWNER}" dist/* -u "$TWINE_USERNAME" -p "$TWINE_PASSWORD"
+                  TAG="${{ github.event.release.tag_name }}"
+                  RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/${TAG}"
+                  echo "Release URL: $RELEASE_URL"
+                  echo "RELEASE_URL=$RELEASE_URL" >> $GITHUB_OUTPUT
