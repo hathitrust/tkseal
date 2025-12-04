@@ -24,6 +24,22 @@ poetry install -E dev
 poetry run tkseal --help
 poetry run tkseal version
 ```
+### System Wide Install
+Currently the steps for running and testing this are as follows.
+
+1. Navigate to the releases in this repository and download the latest version of the `.whl` file.
+    - Open a terminal and navigate to where the file downloaded.
+
+2. Install pipx with the following command:
+    - `brew install pipx` or `pip install pipx`
+
+3. Install tkseal with the following command:
+    - `pipx install ./tkseal-1.0.0-py3-none-any.whl `
+
+4. To ensure that the install worked correctly run the following commands:
+    - `which tkseal`
+    - `tkseal version`
+
 
 ## Running Tests
 
@@ -53,7 +69,7 @@ poetry run ruff format src/ tests/
 # Type checking
 poetry run mypy src/
 
-Note: The file `py.typed`  has been added to the package and specified in pyproject.toml to ensure mypy treats 
+Note: The file `py.typed`  has been added to the package and specified in pyproject.toml to ensure mypy treats
 tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module but no type hints or library stubs" warnings.
 ```
 
@@ -72,23 +88,23 @@ tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module 
 
   **Core Functionality**
 
-  This application allows users to pull different kinds of Kubernetes secrets into their local Tanka environment. 
-  However, certain types of secrets are considered forbidden for pulling due to their sensitive nature or 
-  system management roles. 
-  
-  The pull command includes the `forbidden secrets warning` feature that prevents accidental exposure of sensitive 
+  This application allows users to pull different kinds of Kubernetes secrets into their local Tanka environment.
+  However, certain types of secrets are considered forbidden for pulling due to their sensitive nature or
+  system management roles.
+
+  The pull command includes the `forbidden secrets warning` feature that prevents accidental exposure of sensitive
   system secrets while keeping users informed about what's being filtered out when pulling secrets from a Kubernetes
   namespace into a local Tanka environment using the `tkseal pull` command.
 
   **Implementation Details**
 
-  The detection method involves checking the types of secrets present in the specified Kubernetes namespace against 
+  The detection method involves checking the types of secrets present in the specified Kubernetes namespace against
   a predefined list of forbidden secret types. These forbidden types typically include:
 
   - `kubernetes.io/service-account-token`
   - `helm.sh/release.v1`
   - Any other secret types deemed sensitive or system-managed
-  - The forbidden and allowed secret types are defined in `/src/tkseal/configuration.py` 
+  - The forbidden and allowed secret types are defined in `/src/tkseal/configuration.py`
 
   The implementation uses the following logic:
 
@@ -98,16 +114,16 @@ tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module 
   4. Collect all flagged secrets and prepare a warning message.
 
   **Usage Example**
-  When a user runs `tkseal pull`, if there are forbidden secrets (like service-account-tokens, helm releases, etc.) 
+  When a user runs `tkseal pull`, if there are forbidden secrets (like service-account-tokens, helm releases, etc.)
   in the namespace:
 
   `tkseal pull environments/testing/`
 
-  This shows how "plain_secrets.json" would change based on what's in the Kubernetes cluster, and it will 
+  This shows how "plain_secrets.json" would change based on what's in the Kubernetes cluster, and it will
   warn about forbidden secrets:
 
   ```
-  These secrets are system-managed and will not be included in plain_secrets.json:                                                                                                                                                         
+  These secrets are system-managed and will not be included in plain_secrets.json:
   - oidc-saml-proxy-tls (type: kubernetes.io/tls)
   This shows how "plain_secrets.json" would change based on what's in the Kubernetes cluster
 --- plain_secrets.json
@@ -127,15 +143,15 @@ tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module 
   **Implementation Details - Detection Method**
 
  The `ready command` is essentially a health check that ensures the required Kubernetes ecosystem tools are properly installed before
-  attempting any secret management operations. It is the foundation for all other `TKSeal` operations. 
- 
+  attempting any secret management operations. It is the foundation for all other `TKSeal` operations.
+
  Each dependency checker uses the same pattern:
- 
+
  ``def self.exists?
     `which <tool>` != ""
   end
 ``
-  This runs the shell command `which <tool>` and checks if it returns a non-empty string (meaning the tool was found in PATH). 
+  This runs the shell command `which <tool>` and checks if it returns a non-empty string (meaning the tool was found in PATH).
  Other commands like `diff`, `pull` and `seal` raise an Exception if some of the external tools are not ready
 
 **What each tool does?**
@@ -155,8 +171,8 @@ tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module 
 
   3. `kubeseal (Sealed Secrets)`
 
-  - Purpose: Encrypt Kubernetes Secret manifests into SealedSecret manifests, 
-which can then be safely stored in version control systems like Git. 
+  - Purpose: Encrypt Kubernetes Secret manifests into SealedSecret manifests,
+which can then be safely stored in version control systems like Git.
   - Used for: Converting plain text secrets to sealed secrets
   - Example usage: `printf "secret" | kubeseal --raw --namespace ns --name secret-name --context ctx`
 
@@ -164,7 +180,7 @@ which can then be safely stored in version control systems like Git.
 ## diff command
 
 **Core Functionality**
-The diff command compares the local `plain_secrets.json` file in a specified Tanka environment directory with 
+The diff command compares the local `plain_secrets.json` file in a specified Tanka environment directory with
 the actual Kubernetes secrets deployed in the cluster.
 It shows what changes would be made if the secrets were to be synchronized, without making any changes.
 
@@ -198,7 +214,7 @@ Use `tkseal diff /path/to/env --format yaml` to output plain secrets in YAML for
 
 **If no differences**
 
-```tkseal diff /path/to/tanka/environments/production    
+```tkseal diff /path/to/tanka/environments/production
 No differences
 ```
 
@@ -211,15 +227,15 @@ No differences
 ## pull command
 
 **Core Functionality**
-The pull command extracts existing Kubernetes secrets from the cluster and writes them to a local plain_secrets.json 
-file in the specified Tanka environment directory. This allows users to synchronize their local secret 
+The pull command extracts existing Kubernetes secrets from the cluster and writes them to a local plain_secrets.json
+file in the specified Tanka environment directory. This allows users to synchronize their local secret
 definitions with what is currently deployed in the cluster.
 
 The flow is:
 1. Create a SecretState object with the Tanka environment path
 2. Show a diff of changes (what would change in plain_secrets.json)
 3. Prompt user for confirmation
-4. Write kube secrets to plain_secrets.json  
+4. Write kube secrets to plain_secrets.json
 
 ### pull secrets (with confirmation)
 `tkseal pull /path/to/tanka/environment`
@@ -229,10 +245,10 @@ Use `tkseal pull /path/to/env --format yaml` to output plain secrets in YAML for
 
 **Core Functionality**
 The seal command reads the local plain_secrets.json file in a specified Tanka environment directory,
-seals the secrets using kubeseal, and writes the resulting sealed secrets to sealed_secrets.json. 
+seals the secrets using kubeseal, and writes the resulting sealed secrets to sealed_secrets.json.
 This allows users to securely store secrets in version control.
 
-We used the `bitnami.com/v1alpha1` format to be compatible with the Bitnami Sealed Secrets controller, 
+We used the `bitnami.com/v1alpha1` format to be compatible with the Bitnami Sealed Secrets controller,
 which is used in our Kubernetes cluster.
 
 The flow is:
@@ -240,7 +256,7 @@ The flow is:
 2. Read plain_secrets.json
 3. Seal each secret using kubeseal
 4. Write sealed secrets to sealed_secrets.json
- 
+
 ### Seal secrets (with confirmation)
 `tkseal seal /path/to/tanka/environment`
 Use `tkseal seal /path/to/env --format yaml` to output sealed secrets in YAML format.
