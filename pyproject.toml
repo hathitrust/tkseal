@@ -25,8 +25,8 @@ classifiers = [
 
 # Runtime dependencies
 dependencies = [
-    "click>=8.1.0,<=8.3.3",
-    "pyyaml>=6.0,<=6.0.3",
+    "click>=8.1.0,<=9",
+    "pyyaml>=6.0,<=7",
 ]
 
 [project.scripts]
@@ -52,8 +52,8 @@ default-groups = ["dev"]
 [dependency-groups]
 dev = [
     "pytest>=9,<10",
-    "pytest-cov>=4.1.0",
-    "pytest-mock>=3.15.1",
+    "pytest-cov>=4.1.0,<5",
+    "pytest-mock>=3.15.1,<4",
     "ruff>=0.15.11,<0.16",
     "mypy>=1.20.2,<2",
     "types-pyyaml>=6.0.12,<7",
