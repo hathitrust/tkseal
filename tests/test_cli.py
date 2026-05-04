@@ -303,4 +303,7 @@ class TestFormatFlag:
 
         # Should fail with exit code 2 (usage error)
         assert result.exit_code == 2
-        assert "Invalid value for '--format'" in result.output or "invalid choice" in result.output.lower()
+        assert (
+            "Invalid value for '--format'" in result.output
+            or "invalid choice" in result.output.lower()
+        )

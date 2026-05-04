@@ -45,7 +45,9 @@ def temp_tanka_env(tmp_path, format="json"):
     plain_secrets = [
         {"name": "test-secret", "data": {"username": "admin", "password": "secret123"}}
     ]
-    (env_path / f"plain_secrets.{format}").write_text(json.dumps(plain_secrets, indent=2))
+    (env_path / f"plain_secrets.{format}").write_text(
+        json.dumps(plain_secrets, indent=2)
+    )
 
     return env_path
 

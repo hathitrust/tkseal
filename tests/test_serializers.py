@@ -1,7 +1,6 @@
 """Tests for serialization helpers."""
 
 import json
-
 import pytest
 
 from tkseal.serializers import (
@@ -40,8 +39,6 @@ def test_serialize_deserialize_roundtrip(sample_plain_secrets_multiple, format):
     assert isinstance(serialized, str)
     assert len(serialized) > 0
 
-
-
     # Deserialize back to Python objects
     deserialized = secret_serializer.deserialize_secrets(serialized)
 
@@ -56,7 +53,6 @@ def test_serialize_deserialize_roundtrip(sample_plain_secrets_multiple, format):
 def test_yaml_preserves_multiline_formatting(sample_secrets_with_multiline):
     """Test that YAML format preserves multiline strings with block scalar style."""
 
-    format = "yaml"
     secret_serializer = get_serializer("yaml")
 
     assert isinstance(secret_serializer, YAMLSerializer)
@@ -74,8 +70,6 @@ def test_yaml_preserves_multiline_formatting(sample_secrets_with_multiline):
     # Verify single-line values work normally
     assert "simple_value" in yaml_output
 
-
-
     # Verify round-trip preserves content
     deserialized = secret_serializer.deserialize_secrets(yaml_output)
     assert (
@@ -91,8 +85,3 @@ def test_invalid_format_raises_error(sample_plain_secrets):
     # Test serialize with invalid format
     with pytest.raises(ValueError, match="Unsupported format"):
         secret_serializer = get_serializer("xml")
-        #serialize_secrets(json.loads(sample_plain_secrets), format="xml")
-
-    # Test deserialize with invalid format
-    #with pytest.raises(ValueError, match="Unsupported format"):
-    #    deserialize_secrets('{"test": "data"}', format="xml")

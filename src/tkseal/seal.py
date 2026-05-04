@@ -71,9 +71,7 @@ class Seal:
             secret_serializer = get_serializer(self.secret_state.format)
             plain_secrets = secret_serializer.deserialize_secrets(plain_secrets_text)
         except (json.JSONDecodeError, Exception) as e:
-            raise TKSealError(
-                f"Invalid format in plain_secrets file: {str(e)}"
-            ) from e
+            raise TKSealError(f"Invalid format in plain_secrets file: {str(e)}") from e
 
         # Process each secret
         sealed_secrets = []

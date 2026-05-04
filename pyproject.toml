@@ -1,57 +1,71 @@
 [project]
 name = "tkseal"
 version = "1.0.0"
-requires-python = ">=3.12"
-
-[tool.poetry]
-version = "1.0.0"
 description = "A command-line utility for managing sealed secrets in Kubernetes environments using Grafana Tanka configuration repositories"
+authors = [
+    {name = "K'Ron Spar", email = "kspar@umich.edu"},
+    {name= "Lianet Sepulveda Torres", email = "lisepul@umich.edu"}]
+# 3.14 is not stable → breaks tooling (uv, mypy, etc.)
+requires-python = ">=3.11,<3.14"
 readme = "README.md"
-authors = ["K'Ron Spar <kspar@umich.edu>", "Lianet Sepulveda Torres <lisepul@umich.edu>"]
-packages = [{include = "tkseal", from = "src"}]
-include = ["src/tkseal/py.typed"]
 keywords = ["kubernetes", "secrets", "sealed-secrets", "tanka", "k8s"]
+
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: System :: Systems Administration",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 # Runtime dependencies
-[tool.poetry.dependencies]
-python = ">=3.12"
-click = ">=8.1.0"
-pyyaml = ">=6.0"
+dependencies = [
+    "click>=8.1.0,<=8.3.3",
+    "pyyaml>=6.0,<=6.0.3",
+]
 
-# Development dependencies
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.0.0"
-pytest-cov = "^4.1.0"
-pytest-mock = "^3.15.1"
-ruff = "^0.8.0"
-mypy = "^1.13.0"
-types-pyyaml = "^6.0.0"
-
-[tool.poetry.scripts]
+[project.scripts]
   tkseal = "tkseal.cli:main"
 
+# We need the build system for packaging the package. uv does not replace this.
+# Find here the common build baclends: https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
+# We use hatchling for this application because tkseal is a simple CLI tool.
 [build-system]
-requires = ["poetry-core>=2.1.1"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Tell hatch where your code is. It need it to package correctly the application.
+[tool.hatch.build.targets.wheel]
+packages = ["src/tkseal"]
+include = ["src/tkseal/py.typed"] # This file signals that a package support type checking.
+
+[tool.uv]
+package = true
+default-groups = ["dev"]
+
+# Development dependencies
+[dependency-groups]
+dev = [
+    "pytest>=9,<10",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.15.11,<0.16",
+    "mypy>=1.20.2,<2",
+    "types-pyyaml>=6.0.12,<7",
+    "types-requests>=2.33.0,<3",
+]
 
 [tool.ruff]
 target-version = "py312"
 line-length = 88
 src = ["src", "tests"]
 
-# New in Ruff 0.0.241 and later
-[tool.ruff.lint]
-select = [
+lint.select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
     "F",   # Pyflakes
@@ -60,12 +74,17 @@ select = [
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
 ]
-ignore = [
+lint.ignore = [
     "E501",  # line too long, handled by black
 ]
 
+# Exclude common directories
+exclude = ["build", "dist", ".venv", ".git", "__pycache__"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]  # Allow assert in tests
+fix = [] # Autofix issues when possible
+
 
 # Ruff can format now, so we don't need to run black separately
 [tool.ruff.format]
@@ -75,7 +94,7 @@ ignore = [
 
 [tool.mypy]
 mypy_path = "src"
-files = "src/tkseal"
+files = ["src/tkseal"]
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true

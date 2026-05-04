@@ -6,6 +6,7 @@ import pytest
 from tkseal import TKSealError
 from tkseal.secret import Secret, SecretDataPair, Secrets
 
+
 @pytest.fixture()
 def kubectl_output():
     """Fixture providing sample kubectl output with multiple secrets."""
