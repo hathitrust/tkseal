@@ -22,6 +22,7 @@ def _str_presenter(dumper, data):
 # Register custom representer for multiline string preservation
 yaml.add_representer(str, _str_presenter)
 
+
 class Serializer(ABC):
     """Abstract base class for serializer secrets."""
 
@@ -32,6 +33,7 @@ class Serializer(ABC):
     def deserialize_secrets(self, content: str) -> list[dict]:
         """Deserialize secret data from a string."""
         pass
+
 
 class YAMLSerializer(Serializer):
     """YAML serializer for secrets."""
@@ -49,7 +51,7 @@ class YAMLSerializer(Serializer):
         """
         return yaml.dump(
             data,
-            default_flow_style=False, # Controls the output style.
+            default_flow_style=False,  # Controls the output style.
             # False means indented block format.
             # with each item
             # on a new line.
@@ -71,6 +73,7 @@ class YAMLSerializer(Serializer):
         """
         return yaml.safe_load(content)
 
+
 class JSONSerializer(Serializer):
     """JSON serializer for secrets."""
 
@@ -88,7 +91,6 @@ class JSONSerializer(Serializer):
         return json.dumps(data, indent=2)
 
     def deserialize_secrets(self, content: str) -> list[dict]:
-
         """
         Deserialize secret data from JSON format.
 
@@ -102,6 +104,7 @@ class JSONSerializer(Serializer):
         """
 
         return json.loads(content)
+
 
 def get_serializer(format: str) -> Serializer:
     """
@@ -122,4 +125,3 @@ def get_serializer(format: str) -> Serializer:
         return YAMLSerializer()
     else:
         raise ValueError(f"Unsupported format: {format}. Use 'json' or 'yaml'.")
-

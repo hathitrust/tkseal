@@ -5,24 +5,25 @@ A Python 3.12 port of the Ruby [tkseal](https://github.com/mlibrary/tkseal) CLI 
 ## Development Environment Setup
 
 ### Prerequisites
-- Python 3.12+
-- Poetry (for dependency management)
+- Python 3.14+
+- UV (for dependency management)
 
-### Use poetry to install dev dependencies
+### Use uv to install dev dependencies
 
 ```bash
-poetry install --with dev
+uv run
+uv sync
 ```
 
 ### Setup Commands
 
 ```bash
 # Install dependencies and set up virtual environment
-poetry install -E dev
+uv sync
 
 # Verify installation
-poetry run tkseal --help
-poetry run tkseal version
+uv run tkseal --help
+uv run tkseal version
 ```
 ### System Wide Install
 Currently the steps for running and testing this are as follows.
@@ -45,29 +46,44 @@ Currently the steps for running and testing this are as follows.
 
 ```bash
 # Run all tests
-poetry run pytest
+uv run pytest
 
 # Run specific test file
-poetry run pytest tests/test_cli.py
+uv run pytest tests/test_cli.py
 
 # Run specific test with verbose output
-poetry run pytest tests/test_cli.py::TestVersionCommand::test_version_command_returns_version -v
+uv run pytest tests/test_cli.py::TestVersionCommand::test_version_command_returns_version -v
 
 # Run tests with coverage
-poetry run pytest --cov=src/tkseal --cov-report=term-missing
+uv run pytest --cov=src/tkseal --cov-report=term-missing
 ```
+
+## Upgrade dependencies and uv
+
+# Upgrade the uv version
+`uv self update`
+
+# Upgrade the depenencies in `uv.lock` file
+`uv lock --upgrade`
+
+To use the last version of a specific package you use the command `uv lock --upgrade-package package_name`. It will
+update the package in the file `uv.lock` however in `pyproject.toml` you will see an old version. To see the last version
+on `pyproject.toml` you will have to add it manually. 
+
+# Synchronize the dependencies. 
+ `uv sync`
 
 ## Code Quality
 
 ```bash
 # Run linting
-poetry run ruff check src/ tests/
+uv run ruff check src/ tests/
 
 # Format code
-poetry run ruff format src/ tests/
+uv run ruff format src/ tests/
 
 # Type checking
-poetry run mypy src/
+uv run mypy src/
 
 Note: The file `py.typed`  has been added to the package and specified in pyproject.toml to ensure mypy treats
 tkseal as a typed package and avoids "Skipping analyzing 'tkseal': found module but no type hints or library stubs" warnings.
