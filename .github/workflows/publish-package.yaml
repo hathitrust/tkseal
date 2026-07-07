@@ -16,7 +16,7 @@ jobs:
               uses: actions/checkout@v7
 
             - name: Set up Python
-              uses: actions/setup-python@v4
+              uses: actions/setup-python@v6
               with:
                   python-version: "3.14"
 
@@ -28,7 +28,7 @@ jobs:
 
             # Upload build artifacts to the Release that triggered the event
             - name: Upload artifacts to GitHub Release
-              uses: softprops/action-gh-release@v2
+              uses: softprops/action-gh-release@v3
               with:
                   tag_name: ${{ github.event.release.tag_name }}
                   files: |
